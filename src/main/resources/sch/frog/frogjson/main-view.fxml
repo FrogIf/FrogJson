@@ -3,8 +3,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox prefHeight="600.0" prefWidth="500.0" xmlns="http://javafx.com/javafx/16"
-      xmlns:fx="http://javafx.com/fxml/1" fx:controller="sch.frog.frogjson.MainController">
+<VBox prefHeight="600.0" prefWidth="500.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sch.frog.frogjson.MainController">
     <ToolBar>
         <Button onAction="#onPrettyBtnClick" text="Pretty" />
         <Button onAction="#onCompactBtnClick" text="Compact" />
@@ -13,7 +12,7 @@
         <TextField fx:id="tabTitleText" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="25.0" prefWidth="80.0" />
         <Button onAction="#onNewTabBtnClick" text="+" />
         <Button onAction="#onTreeBtnClick" text="Tree" />
-        <Button onAction="#onHelpBtnClick" text="Help" />
+        <Button onAction="#onAboutBtnClick" style="-fx-background-color: #0090ff;" text="i" textFill="WHITE" />
     </ToolBar>
     <TabPane fx:id="mainTabPane" prefHeight="229.0" prefWidth="290.0" VBox.vgrow="ALWAYS">
     </TabPane>

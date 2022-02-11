@@ -75,7 +75,7 @@ public class MainController implements Initializable {
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        // do nothing
+
     }
 
     private interface IEditStrategy {
@@ -118,25 +118,28 @@ public class MainController implements Initializable {
         return null;
     }
 
-    private Stage helpStage = null;
+    private Stage aboutStage = null;
 
     @FXML
-    protected void onHelpBtnClick() {
-        if (helpStage == null) {
-            helpStage = new Stage();
+    protected void onAboutBtnClick() {
+        if (aboutStage == null) {
+            aboutStage = new Stage();
             try {
-                FXMLLoader fxmlLoader = new FXMLLoader(FrogJsonApplication.class.getResource("help-view.fxml"));
+                FXMLLoader fxmlLoader = new FXMLLoader(FrogJsonApplication.class.getResource("about-view.fxml"));
                 Scene secondScene = new Scene(fxmlLoader.load(), 300, 200);
-                helpStage.setScene(secondScene);
-                helpStage.resizableProperty().setValue(false);
-                helpStage.getIcons().add(ImageResources.appIcon);
+                aboutStage.setScene(secondScene);
+                aboutStage.resizableProperty().setValue(false);
+                aboutStage.setTitle("About");
+                aboutStage.getIcons().add(ImageResources.appIcon);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-        helpStage.show();
-        if (helpStage.isIconified()) {
-            helpStage.setIconified(false);
+        aboutStage.show();
+        if (aboutStage.isIconified()) {
+            aboutStage.setIconified(false);
+        }else{
+            aboutStage.requestFocus();
         }
     }
 }

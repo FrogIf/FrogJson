@@ -4,7 +4,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox prefHeight="200.0" prefWidth="200.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sch.frog.frogjson.HelpController">
+<VBox prefHeight="200.0" prefWidth="200.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sch.frog.frogjson.AboutController">
     <HBox alignment="CENTER_LEFT">
         <Label text="作者:">
          <HBox.margin>
@@ -20,7 +20,7 @@
             <HBox.margin>
                 <Insets right="20.0" />
             </HBox.margin></Label>
-        <Hyperlink fx:id="githubLink" text="https://github.com/FrogIf" onAction="#gotoGithub" />
+        <Hyperlink fx:id="githubLink" text="https://github.com/FrogIf/FrogJson" onAction="#gotoGithub" />
         <VBox.margin>
             <Insets top="5.0" />
         </VBox.margin>
