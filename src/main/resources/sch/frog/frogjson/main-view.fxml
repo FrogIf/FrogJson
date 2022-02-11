@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox prefHeight="600.0" prefWidth="500.0" xmlns="http://javafx.com/javafx/16"
+      xmlns:fx="http://javafx.com/fxml/1" fx:controller="sch.frog.frogjson.MainController">
+    <ToolBar>
+        <Button onAction="#onPrettyBtnClick" text="Pretty" />
+        <Button onAction="#onCompactBtnClick" text="Compact" />
+        <Button onAction="#onFromStringBtnClick" text="FromString" />
+        <Button onAction="#onToStringBtnClick" text="ToString" />
+        <TextField fx:id="tabTitleText" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="25.0" prefWidth="80.0" />
+        <Button onAction="#onNewTabBtnClick" text="+" />
+        <Button onAction="#onTreeBtnClick" text="Tree" />
+        <Button onAction="#onHelpBtnClick" text="Help" />
+    </ToolBar>
+    <TabPane fx:id="mainTabPane" prefHeight="229.0" prefWidth="290.0" VBox.vgrow="ALWAYS">
+    </TabPane>
+    <Pane style="-fx-background-color: #acacac;">
+        <Label fx:id="msgText" />
+    </Pane>
+</VBox>
