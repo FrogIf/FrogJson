@@ -50,7 +50,7 @@ class JsonSyntacticAnalysis {
     }
 
     private static void triggerException(Token token) throws JsonParseException {
-        throw new JsonParseException("json format is not right, row : " + token.row + ", col : " + token.col + ", literal : " + token.literal);
+        throw new JsonParseException("json format is not right, row : " + (token.rowIndex + 1) + ", col : " + (token.colIndex + 1) + ", literal : " + token.literal);
     }
 
     private static BuildStatusNode buildStatusMap() {

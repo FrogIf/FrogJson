@@ -22,22 +22,22 @@ class JsonLexicalAnalyzer {
             if (isWhitespace(ch)) {
                 step = 1;
             } else if (ch == '{') {
-                tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.OBJECT_BEGIN).setTokenType(TokenType.structure).setRow(rowIndex).setCol(colIndex).build());
+                tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.OBJECT_BEGIN).setTokenType(TokenType.structure).setRowIndex(rowIndex).setColIndex(colIndex).build());
                 step = 1;
             } else if (ch == '}') {
-                tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.OBJECT_END).setTokenType(TokenType.structure).setRow(rowIndex).setCol(colIndex).build());
+                tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.OBJECT_END).setTokenType(TokenType.structure).setRowIndex(rowIndex).setColIndex(colIndex).build());
                 step = 1;
             } else if (ch == '[') {
-                tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.ARRAY_BEGIN).setTokenType(TokenType.structure).setRow(rowIndex).setCol(colIndex).build());
+                tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.ARRAY_BEGIN).setTokenType(TokenType.structure).setRowIndex(rowIndex).setColIndex(colIndex).build());
                 step = 1;
             } else if (ch == ']') {
-                tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.ARRAY_END).setTokenType(TokenType.structure).setRow(rowIndex).setCol(colIndex).build());
+                tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.ARRAY_END).setTokenType(TokenType.structure).setRowIndex(rowIndex).setColIndex(colIndex).build());
                 step = 1;
             } else if (ch == ':') {
-                tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.COLON).setTokenType(TokenType.structure).setRow(rowIndex).setCol(colIndex).build());
+                tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.COLON).setTokenType(TokenType.structure).setRowIndex(rowIndex).setColIndex(colIndex).build());
                 step = 1;
             } else if (ch == ',') {
-                tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.COMMA).setTokenType(TokenType.structure).setRow(rowIndex).setCol(colIndex).build());
+                tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.COMMA).setTokenType(TokenType.structure).setRowIndex(rowIndex).setColIndex(colIndex).build());
                 step = 1;
             } else if (ch == '"') // string
             {
@@ -50,7 +50,7 @@ class JsonLexicalAnalyzer {
                         triggerParseException("can't parse as string, token start with : EOF", rowIndex, colIndex);
                     }
                 } else {
-                    tokens.add(TokenBuilder.newBuilder().setLiteral(str).setTokenType(TokenType.t_string).setRow(rowIndex).setCol(colIndex).build());
+                    tokens.add(TokenBuilder.newBuilder().setLiteral(str).setTokenType(TokenType.t_string).setRowIndex(rowIndex).setColIndex(colIndex).build());
                     step = strLen.value;
                 }
             } else if (ch == '-' || isDigit(ch)) // number
@@ -59,13 +59,13 @@ class JsonLexicalAnalyzer {
                 if (num == null) {
                     triggerParseException("can't parse as number, token start with : '" + ch + "'", rowIndex, colIndex);
                 } else {
-                    tokens.add(TokenBuilder.newBuilder().setLiteral(num).setTokenType(TokenType.number).setRow(rowIndex).setCol(colIndex).build());
+                    tokens.add(TokenBuilder.newBuilder().setLiteral(num).setTokenType(TokenType.number).setRowIndex(rowIndex).setColIndex(colIndex).build());
                     step = num.length();
                 }
             } else if (ch == 'f') // false
             {
                 if (match(json, "false", i)) {
-                    tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.T_FALSE).setTokenType(TokenType.t_const).setRow(rowIndex).setCol(colIndex).build());
+                    tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.T_FALSE).setTokenType(TokenType.t_const).setRowIndex(rowIndex).setColIndex(colIndex).build());
                     step = 5;
                 } else {
                     triggerParseException("unknown token start with : 'f'", rowIndex, colIndex);
@@ -73,7 +73,7 @@ class JsonLexicalAnalyzer {
             } else if (ch == 't') // true
             {
                 if (match(json, JsonWord.T_TRUE, i)) {
-                    tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.T_TRUE).setTokenType(TokenType.t_const).setRow(rowIndex).setCol(colIndex).build());
+                    tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.T_TRUE).setTokenType(TokenType.t_const).setRowIndex(rowIndex).setColIndex(colIndex).build());
                     step = 4;
                 } else {
                     triggerParseException("unknown token start with : 't'", rowIndex, colIndex);
@@ -81,7 +81,7 @@ class JsonLexicalAnalyzer {
             } else if (ch == 'n') // null
             {
                 if (match(json, JsonWord.T_NULL, i)) {
-                    tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.T_NULL).setTokenType(TokenType.t_const).setRow(rowIndex).setCol(colIndex).build());
+                    tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.T_NULL).setTokenType(TokenType.t_const).setRowIndex(rowIndex).setColIndex(colIndex).build());
                     step = 4;
                 } else {
                     triggerParseException("unknown token start with : 'n'", rowIndex, colIndex);
@@ -104,8 +104,8 @@ class JsonLexicalAnalyzer {
         return tokens;
     }
 
-    private static void triggerParseException(String msg, int row, int col) throws JsonParseException {
-        throw new JsonParseException(msg + ", row : " + row + ", col : " + col);
+    private static void triggerParseException(String msg, int rowIndex, int colIndex) throws JsonParseException {
+        throw new JsonParseException(msg + ", row : " + (rowIndex + 1) + ", col : " + (colIndex + 1));
     }
 
     private static String parseString(String json, int start, RefObj<Integer> strLen) {
@@ -297,9 +297,9 @@ class JsonLexicalAnalyzer {
 
         private TokenType type;
 
-        private int row = -1;
+        private int rowIndex = -1;
 
-        private int col = -1;
+        private int colIndex = -1;
 
         public static TokenBuilder newBuilder() {
             return new TokenBuilder();
@@ -315,18 +315,18 @@ class JsonLexicalAnalyzer {
             return this;
         }
 
-        public TokenBuilder setRow(int row) {
-            this.row = row;
+        public TokenBuilder setRowIndex(int rowIndex) {
+            this.rowIndex = rowIndex;
             return this;
         }
 
-        public TokenBuilder setCol(int col) {
-            this.col = col;
+        public TokenBuilder setColIndex(int colIndex) {
+            this.colIndex = colIndex;
             return this;
         }
 
         public Token build() {
-            return new Token(this.literal, this.type, this.row, this.col);
+            return new Token(this.literal, this.type, this.rowIndex, this.colIndex);
         }
     }
 
@@ -356,15 +356,15 @@ final class Token {
 
     public final TokenType type;
 
-    public final int col;
+    public final int colIndex;
 
-    public final int row;
+    public final int rowIndex;
 
-    public Token(String literal, TokenType type, int row, int col) {
+    public Token(String literal, TokenType type, int rowIndex, int colIndex) {
         if (literal == null) {
             throw new IllegalArgumentException("literal is null.");
         }
-        if (row < 0 || col < 0) {
+        if (rowIndex < 0 || colIndex < 0) {
             throw new IllegalArgumentException("row or col must be positive.");
         }
         if(type == null){
@@ -372,8 +372,8 @@ final class Token {
         }
         this.literal = literal;
         this.type = type;
-        this.row = row;
-        this.col = col;
+        this.rowIndex = rowIndex;
+        this.colIndex = colIndex;
     }
 
     @Override
