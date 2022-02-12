@@ -198,6 +198,9 @@ class JsonLexicalAnalyzer {
             result.append('0');
             index++;
             ch = json.charAt(index);
+            if(ch != '.' && !isDigit(ch)){
+                return result.toString();
+            }
         } else {
             result.append(ch);
             index++;
