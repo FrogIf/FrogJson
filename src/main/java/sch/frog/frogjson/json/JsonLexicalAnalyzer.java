@@ -198,8 +198,12 @@ class JsonLexicalAnalyzer {
             result.append('0');
             index++;
             ch = json.charAt(index);
-            if(ch != '.' && !isDigit(ch)){
-                return result.toString();
+            if(ch != '.' && ch != 'e' && ch != 'E'){
+                if(!isDigit(ch)){
+                    return result.toString();
+                }else {
+                    return null;
+                }
             }
         } else {
             result.append(ch);
@@ -208,7 +212,7 @@ class JsonLexicalAnalyzer {
                 ch = json.charAt(index);
                 if (isDigit(ch)) {
                     result.append(ch);
-                } else if (ch == '.') {
+                } else if (ch == '.' || ch == 'e' || ch == 'E') {
                     break;
                 } else {
                     return result.toString();
