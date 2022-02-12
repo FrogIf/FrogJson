@@ -61,9 +61,12 @@ public class MainController implements Initializable {
 
     private void editJson(IEditStrategy strategy) {
         JsonEditor editor = getSelectEditContainer();
+        msgText.setText(null);
         if (editor != null) {
             String json = editor.getJson();
-            if(json == null || json.isBlank()){ return; }
+            if(json == null || json.isBlank()){
+                return;
+            }
             try {
                 String result = strategy.edit(json);
                 editor.setJsonContent(result);
@@ -92,6 +95,7 @@ public class MainController implements Initializable {
     @FXML
     protected void onTreeBtnClick() {
         JsonEditor editor = getSelectEditContainer();
+        msgText.setText(null);
         if (editor != null) {
             String json = editor.getJson();
             if (json == null || json.isBlank()) { return; }

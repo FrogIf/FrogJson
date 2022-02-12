@@ -21,7 +21,6 @@ public class JsonEditor extends SplitPane {
 
     public JsonEditor() {
         super();
-        this.setOrientation(Orientation.HORIZONTAL);
         ObservableList<Node> items = super.getItems();
         initCodeArea();
         VirtualizedScrollPane<CodeArea> scrollPane = new VirtualizedScrollPane<>(codeArea);
