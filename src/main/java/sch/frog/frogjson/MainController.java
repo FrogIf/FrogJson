@@ -101,7 +101,10 @@ public class MainController implements Initializable {
         messageEmitter.clear();
         if (editor != null) {
             String json = editor.getJson();
-            if (json == null || json.isBlank()) { return; }
+            if (json == null || json.isBlank()) {
+                editor.openTree(new TreeItem<>(FrogJsonConstants.TREE_ROOT_NAME));
+                return;
+            }
             TreeStructJsonWriter writer = new TreeStructJsonWriter();
             try {
                 JsonElement jsonElement = JsonOperator.parse(json);

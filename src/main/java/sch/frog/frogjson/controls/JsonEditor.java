@@ -1,15 +1,12 @@
 package sch.frog.frogjson.controls;
 
 import javafx.collections.ObservableList;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
+import javafx.scene.input.KeyCode;
+import javafx.scene.layout.BorderPane;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
@@ -24,7 +21,9 @@ public class JsonEditor extends SplitPane {
 
     private TreeView<String> treeView;
 
-    private MessageEmitter messageEmitter;
+    private final MessageEmitter messageEmitter;
+
+    private SearchBox treeSearchBox;
 
     public JsonEditor(MessageEmitter messageEmitter) {
         super();
@@ -97,12 +96,22 @@ public class JsonEditor extends SplitPane {
             treeSearchForeachActionForNext = new TreeSearchForeachActionForNext(this.treeView, this.messageEmitter);
             treeSearchForeachActionForPrevious = new TreeSearchForeachActionForPrevious(this.treeView, this.messageEmitter);
             treeView.setContextMenu(initContextMenu(treeView));
-            VBox vBox = new VBox();
-            ObservableList<Node> children = vBox.getChildren();
-            children.add(treeView);
-            VBox.setVgrow(treeView, Priority.ALWAYS);
-            children.add(searchBox());
-            super.getItems().add(vBox);
+
+            BorderPane borderPane = new BorderPane();
+            borderPane.setCenter(treeView);
+            treeSearchBox = new SearchBox(borderPane, (actionEvent, text) -> {
+                this.messageEmitter.clear();
+                searchNextForTree(text, this.messageEmitter);
+            }, (actionEvent, text) -> {
+                this.messageEmitter.clear();
+                searchPreviousForTree(text, this.messageEmitter);
+            });
+            borderPane.setOnKeyPressed(keyEvent -> {
+                if(keyEvent.isControlDown() && keyEvent.getCode() == KeyCode.F){
+                    borderPane.setTop(treeSearchBox);
+                }
+            });
+            super.getItems().add(borderPane);
         }
         treeView.setRoot(root);
         if (root != null) {
@@ -138,37 +147,6 @@ public class JsonEditor extends SplitPane {
     private interface ForeachAction{
         boolean doSomething(TreeItem<String> node);
         default void searchFinish(){ /* do nothing */ }
-    }
-
-    private HBox searchBox(){
-        HBox hBox = new HBox();
-        hBox.setAlignment(Pos.CENTER);
-        ObservableList<Node> hBoxChildren = hBox.getChildren();
-
-        Label label = new Label("Search:");
-        HBox.setMargin(label, new Insets(0, 10, 0, 0));
-        final TextField textField = new TextField();
-        HBox.setMargin(textField, new Insets(0, 10, 0, 0));
-        hBoxChildren.add(label);
-        hBoxChildren.add(textField);
-
-        Button next = new Button("Next");
-        HBox.setMargin(next, new Insets(0, 10, 0, 0));
-        hBoxChildren.add(next);
-
-        Button previous = new Button("Previous");
-        HBox.setMargin(previous, new Insets(0, 10, 0, 0));
-        hBoxChildren.add(previous);
-
-        next.setOnAction(actionEvent -> {
-            this.messageEmitter.clear();
-            searchNextForTree(textField.getText(), this.messageEmitter);
-        });
-        previous.setOnAction(actionEvent -> {
-            this.messageEmitter.clear();
-            searchPreviousForTree(textField.getText(), this.messageEmitter);
-        });
-        return hBox;
     }
 
     private TreeSearchForeachActionForNext treeSearchForeachActionForNext;

@@ -9,7 +9,7 @@ import java.util.Stack;
 
 public class TreeStructJsonWriter implements IJsonValueWriter {
 
-    private final TreeItem<String> root = new TreeItem<>("tree");
+    private final TreeItem<String> root = new TreeItem<>(FrogJsonConstants.TREE_ROOT_NAME);
 
     private final Stack<TreeItem<String>> cursorParentStack = new Stack<>();
 
