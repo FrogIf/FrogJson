@@ -4,41 +4,30 @@ import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TreeItem;
-import org.fxmisc.flowless.VirtualizedScrollPane;
-import org.fxmisc.richtext.CodeArea;
-import org.fxmisc.richtext.LineNumberFactory;
 import sch.frog.frogjson.MessageEmitter;
 
 public class JsonEditor extends SplitPane {
 
-    private final CodeArea codeArea = new CodeArea();
-
     private JsonTreeBox jsonTreeBox;
+
+    private final JsonTextBox jsonTextBox;
 
     private final MessageEmitter messageEmitter;
 
     public JsonEditor(MessageEmitter messageEmitter) {
         super();
         this.messageEmitter = messageEmitter;
-        ObservableList<Node> items = super.getItems();
-        initCodeArea();
-        VirtualizedScrollPane<CodeArea> scrollPane = new VirtualizedScrollPane<>(codeArea);
-        items.add(scrollPane);
-    }
-
-    private void initCodeArea(){
-        codeArea.setParagraphGraphicFactory(LineNumberFactory.get(codeArea));
-        codeArea.prefHeightProperty().bind(this.heightProperty());
-        codeArea.prefWidthProperty().bind(this.widthProperty());
+        ObservableList<Node> items = this.getItems();
+        jsonTextBox = new JsonTextBox();
+        items.add(jsonTextBox);
     }
 
     public String getJson() {
-        return codeArea.getText();
+        return jsonTextBox.getContent();
     }
 
     public void setJsonContent(String json) {
-        codeArea.clear();
-        codeArea.appendText(json);
+        jsonTextBox.setContent(json);
     }
 
     public void openTree(TreeItem<String> root) {
@@ -51,8 +40,5 @@ public class JsonEditor extends SplitPane {
             root.setExpanded(true);
         }
     }
-
-
-
 
 }

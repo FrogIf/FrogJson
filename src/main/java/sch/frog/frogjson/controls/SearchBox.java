@@ -1,13 +1,13 @@
 package sch.frog.frogjson.controls;
 
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 
@@ -40,15 +40,20 @@ public class SearchBox extends BorderPane {
         close.setOnAction(actionEvent -> parentContainer.setTop(null));
         this.setRight(close);
 
-        next.setOnAction(event -> onNextClick.click(event, textField.getText()));
-        previous.setOnAction(event -> onPreviousClick.click(event, textField.getText()));
+        next.setOnAction(event -> onNextClick.click(textField.getText()));
+        textField.setOnKeyPressed(keyEvent -> {
+            if(keyEvent.getCode() == KeyCode.ENTER){
+                onNextClick.click(textField.getText());
+            }
+        });
+        previous.setOnAction(event -> onPreviousClick.click(textField.getText()));
     }
 
     interface OnNextClick {
-        void click(ActionEvent event, String keyword);
+        void click(String keyword);
     }
 
     interface OnPreviousClick{
-        void click(ActionEvent event, String keyword);
+        void click(String keyword);
     }
 }
