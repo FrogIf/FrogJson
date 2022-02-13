@@ -13,6 +13,8 @@ import javafx.scene.layout.HBox;
 
 public class SearchBox extends BorderPane {
 
+    private final TextField searchTextField;
+
     public SearchBox(BorderPane parentContainer, OnNextClick onNextClick, OnPreviousClick onPreviousClick) {
         this.setPadding(new Insets(5, 10, 5, 10));
 
@@ -22,10 +24,10 @@ public class SearchBox extends BorderPane {
 
         Label label = new Label("Search:");
         HBox.setMargin(label, new Insets(0, 10, 0, 0));
-        final TextField textField = new TextField();
-        HBox.setMargin(textField, new Insets(0, 10, 0, 0));
+        searchTextField = new TextField();
+        HBox.setMargin(searchTextField, new Insets(0, 10, 0, 0));
         hBoxChildren.add(label);
-        hBoxChildren.add(textField);
+        hBoxChildren.add(searchTextField);
 
         Button next = new Button("Next");
         HBox.setMargin(next, new Insets(0, 10, 0, 0));
@@ -40,13 +42,13 @@ public class SearchBox extends BorderPane {
         close.setOnAction(actionEvent -> parentContainer.setTop(null));
         this.setRight(close);
 
-        next.setOnAction(event -> onNextClick.click(textField.getText()));
-        textField.setOnKeyPressed(keyEvent -> {
+        next.setOnAction(event -> onNextClick.click(searchTextField.getText()));
+        searchTextField.setOnKeyPressed(keyEvent -> {
             if(keyEvent.getCode() == KeyCode.ENTER){
-                onNextClick.click(textField.getText());
+                onNextClick.click(searchTextField.getText());
             }
         });
-        previous.setOnAction(event -> onPreviousClick.click(textField.getText()));
+        previous.setOnAction(event -> onPreviousClick.click(searchTextField.getText()));
     }
 
     interface OnNextClick {
@@ -55,5 +57,9 @@ public class SearchBox extends BorderPane {
 
     interface OnPreviousClick{
         void click(String keyword);
+    }
+
+    public void focusSearch(){
+        searchTextField.requestFocus();
     }
 }

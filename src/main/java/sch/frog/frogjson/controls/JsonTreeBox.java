@@ -41,6 +41,7 @@ public class JsonTreeBox extends BorderPane {
         this.setOnKeyPressed(keyEvent -> {
             if(keyEvent.isControlDown() && keyEvent.getCode() == KeyCode.F){
                 this.setTop(treeSearchBox);
+                treeSearchBox.focusSearch();
             }
         });
     }
