@@ -27,6 +27,8 @@ public class MainController implements Initializable {
     @FXML
     private TextField tabTitleText;
 
+    private MessageEmitter messageEmitter;
+
     @FXML
     protected void onCompactBtnClick() {
         this.editJson(origin -> {
@@ -61,7 +63,7 @@ public class MainController implements Initializable {
 
     private void editJson(IEditStrategy strategy) {
         JsonEditor editor = getSelectEditContainer();
-        msgText.setText(null);
+        messageEmitter.clear();
         if (editor != null) {
             String json = editor.getJson();
             if(json == null || json.isBlank()){
@@ -71,14 +73,15 @@ public class MainController implements Initializable {
                 String result = strategy.edit(json);
                 editor.setJsonContent(result);
             } catch (Exception e) {
-                msgText.setText(e.getMessage());
+                messageEmitter.emitError(e.getMessage());
             }
         }
     }
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-
+        messageEmitter = new MessageEmitter(msgText);
+        EditTabManager.addTab(mainTabPane, messageEmitter);
     }
 
     private interface IEditStrategy {
@@ -89,13 +92,13 @@ public class MainController implements Initializable {
     protected void onNewTabBtnClick() {
         String tabTitle = tabTitleText.getText();
         tabTitleText.setText(null);
-        EditTabManager.addTab(mainTabPane, tabTitle);
+        EditTabManager.addTab(mainTabPane, tabTitle, this.messageEmitter);
     }
 
     @FXML
     protected void onTreeBtnClick() {
         JsonEditor editor = getSelectEditContainer();
-        msgText.setText(null);
+        messageEmitter.clear();
         if (editor != null) {
             String json = editor.getJson();
             if (json == null || json.isBlank()) { return; }
@@ -106,7 +109,7 @@ public class MainController implements Initializable {
                 TreeItem<String> root = writer.getRoot();
                 editor.openTree(root);
             } catch (JsonParseException e) {
-                msgText.setText(e.getMessage());
+                messageEmitter.emitError(e.getMessage());
             }
         }
     }

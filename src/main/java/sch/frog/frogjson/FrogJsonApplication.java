@@ -2,12 +2,8 @@ package sch.frog.frogjson;
 
 import javafx.application.Application;
 import javafx.application.HostServices;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Node;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.TabPane;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -25,17 +21,6 @@ public class FrogJsonApplication extends Application {
         stage.setScene(scene);
         stage.getIcons().add(ImageResources.appIcon);
         stage.show();
-        this.onLoadSuccess(stage.getScene().getRoot());
-    }
-
-    private void onLoadSuccess(Parent root){
-        ObservableList<Node> nodes = root.getChildrenUnmodifiable();
-        for(Node node : nodes){
-            if(node instanceof TabPane){
-                EditTabManager.addTab((TabPane) node);
-                break;
-            }
-        }
     }
 
     public static HostServices getAppHostServices(){
