@@ -18,7 +18,7 @@ public class JsonEditor extends SplitPane {
         super();
         this.messageEmitter = messageEmitter;
         ObservableList<Node> items = this.getItems();
-        jsonTextBox = new JsonTextBox();
+        jsonTextBox = new JsonTextBox(this.messageEmitter);
         items.add(jsonTextBox);
     }
 
