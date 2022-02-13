@@ -2,6 +2,8 @@ package sch.frog.frogjson;
 
 import javafx.scene.control.Label;
 
+import java.awt.*;
+
 public class MessageEmitter {
 
     private final Label messageLabel;
@@ -16,10 +18,12 @@ public class MessageEmitter {
 
     public void emitWarn(String msg){
         messageLabel.setText(msg);
+        Toolkit.getDefaultToolkit().beep();
     }
 
     public void emitError(String msg){
         messageLabel.setText(msg);
+        Toolkit.getDefaultToolkit().beep();
     }
 
     public void clear(){
