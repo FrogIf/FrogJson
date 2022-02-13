@@ -42,7 +42,7 @@ public class FrogJsonApplication extends Application {
         return self.getHostServices();
     }
 
-    public static void main(String[] args) {
-        launch();
-    }
+//    public static void main(String[] args) {
+//        launch();
+//    }
 }
