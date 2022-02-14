@@ -131,19 +131,15 @@ public class MainController implements Initializable {
     private Stage aboutStage = null;
 
     @FXML
-    protected void onAboutBtnClick() {
+    protected void onAboutBtnClick() throws IOException {
         if (aboutStage == null) {
             aboutStage = new Stage();
-            try {
-                FXMLLoader fxmlLoader = new FXMLLoader(FrogJsonApplication.class.getResource("about-view.fxml"));
-                Scene secondScene = new Scene(fxmlLoader.load(), 300, 200);
-                aboutStage.setScene(secondScene);
-                aboutStage.resizableProperty().setValue(false);
-                aboutStage.setTitle("About");
-                aboutStage.getIcons().add(ImageResources.appIcon);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            FXMLLoader fxmlLoader = new FXMLLoader(FrogJsonApplication.class.getResource("about-view.fxml"));
+            Scene secondScene = new Scene(fxmlLoader.load(), 300, 200);
+            aboutStage.setScene(secondScene);
+            aboutStage.resizableProperty().setValue(false);
+            aboutStage.setTitle("About");
+            aboutStage.getIcons().add(ImageResources.appIcon);
         }
         aboutStage.show();
         if (aboutStage.isIconified()) {
