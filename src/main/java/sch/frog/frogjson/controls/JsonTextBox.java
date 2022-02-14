@@ -35,7 +35,7 @@ public class JsonTextBox extends BorderPane {
                 treeSearchBox.focusSearch();
             }
         });
-
+        treeSearchBox.onClose(this.codeArea::requestFocus);
     }
 
     private void initCodeArea(){

@@ -17,6 +17,8 @@ public class SearchBox extends BorderPane {
 
     private final SearchOverviewFetcher searchOverviewFetcher = new SearchOverviewFetcher();
 
+    private Runnable whenClose = null;
+
     public SearchBox(BorderPane parentContainer, OnNextClick onNextClick, OnPreviousClick onPreviousClick) {
         this.setPadding(new Insets(5, 10, 5, 10));
 
@@ -50,10 +52,17 @@ public class SearchBox extends BorderPane {
         hBoxChildren.add(searchOverviewBox);
         searchOverviewBox.visibleProperty().setValue(false);
 
+        Runnable closeSearch = () -> {
+            parentContainer.setTop(null);
+            if(whenClose != null){
+                whenClose.run();
+            }
+        };
+
         this.setLeft(hBox);
         Label close = new Label("×");
         close.setStyle("-fx-font-size: 16; -fx-cursor: hand;");
-        close.setOnMouseClicked(mouseEvent -> parentContainer.setTop(null));
+        close.setOnMouseClicked(mouseEvent -> closeSearch.run());
         this.setRight(close);
 
         Runnable onNext = () -> {
@@ -73,6 +82,8 @@ public class SearchBox extends BorderPane {
         searchTextField.setOnKeyPressed(keyEvent -> {
             if(keyEvent.getCode() == KeyCode.ENTER){
                 onNext.run();
+            }else if(keyEvent.getCode() == KeyCode.ESCAPE){
+                closeSearch.run();
             }
         });
 
@@ -117,5 +128,9 @@ public class SearchBox extends BorderPane {
             this.maxIndex = maxIndex;
             this.currentIndex = currentIndex;
         }
+    }
+
+    public void onClose(Runnable closeRun){
+        this.whenClose = closeRun;
     }
 }

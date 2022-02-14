@@ -49,6 +49,7 @@ public class JsonTreeBox extends BorderPane {
                 }
             }
         });
+        treeSearchBox.onClose(treeView::requestFocus);
     }
 
     private ContextMenu initContextMenu(final TreeView<String> treeView) {
