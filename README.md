@@ -13,4 +13,13 @@ json tool. like this:
 * Tree: 解析输出json树;
 * 输入框: 用来给新建的tab指定名称.
 
+环境要求: jdk11
+
 ## 开发计划
+
+
+## 手动打包
+
+```
+mvn clean package
+```
