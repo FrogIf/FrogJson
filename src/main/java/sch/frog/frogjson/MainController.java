@@ -1,11 +1,18 @@
 package sch.frog.frogjson;
 
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TreeItem;
 import javafx.stage.Stage;
 import sch.frog.frogjson.controls.JsonEditor;
 import sch.frog.frogjson.json.JsonElement;
@@ -14,6 +21,7 @@ import sch.frog.frogjson.json.JsonParseException;
 
 import java.io.IOException;
 import java.net.URL;
+import java.util.Iterator;
 import java.util.ResourceBundle;
 
 public class MainController implements Initializable {
@@ -82,6 +90,7 @@ public class MainController implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
         messageEmitter = new MessageEmitter(msgText);
         EditTabManager.addTab(mainTabPane, messageEmitter);
+        mainTabPane.setContextMenu(initTabPaneContextMenu(mainTabPane));
     }
 
     private interface IEditStrategy {
@@ -147,5 +156,80 @@ public class MainController implements Initializable {
         }else{
             aboutStage.requestFocus();
         }
+    }
+
+    private ContextMenu initTabPaneContextMenu(TabPane tabPane) {
+        ContextMenu treeContextMenu = new ContextMenu();
+        MenuItem closeSelect = new MenuItem("Close");
+        closeSelect.setOnAction(actionEvent -> {
+            Tab selectTab = tabPane.getSelectionModel().getSelectedItem();
+            if(selectTab != null){
+                tabPane.getTabs().remove(selectTab);
+            }else{
+                messageEmitter.emitWarn("no tab select");
+            }
+        });
+
+        MenuItem closeOthers = new MenuItem("Close Other");
+        closeOthers.setOnAction(actionEvent -> {
+            Tab selectTab = tabPane.getSelectionModel().getSelectedItem();
+            if(selectTab != null){
+                ObservableList<Tab> tabs = tabPane.getTabs();
+                tabs.clear();
+                tabs.add(selectTab);
+            }else{
+                messageEmitter.emitWarn("no tab select");
+            }
+        });
+
+        MenuItem closeAll = new MenuItem("Close All");
+        closeAll.setOnAction(actionEvent -> {
+            tabPane.getTabs().clear();
+        });
+
+        MenuItem closeToLeft = new MenuItem("Close to Left");
+        closeToLeft.setOnAction(actionEvent -> {
+            Tab selectTab = tabPane.getSelectionModel().getSelectedItem();
+            if(selectTab != null){
+                ObservableList<Tab> tabs = tabPane.getTabs();
+                Iterator<Tab> iterator = tabs.iterator();
+                while(iterator.hasNext()){
+                    if(iterator.next() == selectTab){
+                        break;
+                    }
+                    iterator.remove();
+                }
+            }else{
+                messageEmitter.emitWarn("no tab select");
+            }
+        });
+
+        MenuItem closeToRight = new MenuItem("Close to Right");
+        closeToRight.setOnAction(actionEvent -> {
+            Tab selectTab = tabPane.getSelectionModel().getSelectedItem();
+            if(selectTab != null){
+                ObservableList<Tab> tabs = tabPane.getTabs();
+                Iterator<Tab> iterator = tabs.iterator();
+                boolean startRemove = false;
+                while(iterator.hasNext()){
+                    Tab next = iterator.next();
+                    if(startRemove){
+                        iterator.remove();
+                    }else{
+                        startRemove = next == selectTab;
+                    }
+                }
+            }else{
+                messageEmitter.emitWarn("no tab select");
+            }
+        });
+
+        ObservableList<MenuItem> items = treeContextMenu.getItems();
+        items.add(closeOthers);
+        items.add(closeAll);
+        items.add(closeToLeft);
+        items.add(closeToRight);
+        items.add(closeSelect);
+        return treeContextMenu;
     }
 }
