@@ -9,6 +9,7 @@ import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
+import sch.frog.frogjson.ClipboardUtil;
 import sch.frog.frogjson.MessageEmitter;
 
 import java.util.Iterator;
@@ -39,9 +40,13 @@ public class JsonTreeBox extends BorderPane {
             searchPreviousForTree(text, messageEmitter);
         });
         this.setOnKeyPressed(keyEvent -> {
-            if(keyEvent.isControlDown() && keyEvent.getCode() == KeyCode.F){
-                this.setTop(treeSearchBox);
-                treeSearchBox.focusSearch();
+            if(keyEvent.isControlDown()){
+                if(keyEvent.getCode() == KeyCode.F){
+                    this.setTop(treeSearchBox);
+                    treeSearchBox.focusSearch();
+                }else if(keyEvent.getCode() == KeyCode.C){
+                    this.copySelectContent();
+                }
             }
         });
     }
@@ -50,23 +55,16 @@ public class JsonTreeBox extends BorderPane {
         ContextMenu treeContextMenu = new ContextMenu();
         MenuItem copy = new MenuItem("Copy");
         copy.setOnAction(actionEvent -> {
-            TreeItem<String> selectedItem = treeView.getSelectionModel().getSelectedItem();
-            if (selectedItem != null) {
-                String value = selectedItem.getValue();
-                Clipboard clipboard = Clipboard.getSystemClipboard();
-                ClipboardContent content = new ClipboardContent();
-                content.putString(value);
-                clipboard.setContent(content);
-            }
+            this.copySelectContent();
         });
-        MenuItem collapse = new MenuItem("Collapse");
+        MenuItem collapse = new MenuItem("Collapse All");
         collapse.setOnAction(actionEvent -> {
             TreeItem<String> selectedItem = treeView.getSelectionModel().getSelectedItem();
             if(selectedItem != null){
                 collapseOrExpand(selectedItem, false);
             }
         });
-        MenuItem expand = new MenuItem("Expand");
+        MenuItem expand = new MenuItem("Expand All");
         expand.setOnAction(actionEvent -> {
             TreeItem<String> selectedItem = treeView.getSelectionModel().getSelectedItem();
             if(selectedItem != null){
@@ -78,6 +76,14 @@ public class JsonTreeBox extends BorderPane {
         items.add(expand);
         items.add(collapse);
         return treeContextMenu;
+    }
+
+    private void copySelectContent(){
+        TreeItem<String> selectedItem = treeView.getSelectionModel().getSelectedItem();
+        if (selectedItem != null) {
+            String value = selectedItem.getValue();
+            ClipboardUtil.putToClipboard(value);
+        }
     }
 
     private void collapseOrExpand(TreeItem<String> treeItem, boolean expand){
