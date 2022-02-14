@@ -140,8 +140,12 @@ public class JsonTextBox extends BorderPane {
         }
 
         private void buildSearchResult(){
-            String content = this.codeArea.getText();
+            if(searchText == null || searchText.isEmpty()){
+                searchResults = new ArrayList<>(0);
+                return;
+            }
             int len = searchText.length();
+            String content = this.codeArea.getText();
             int index = content.indexOf(searchText);
             searchResults = new ArrayList<>();
             while(index >= 0){
