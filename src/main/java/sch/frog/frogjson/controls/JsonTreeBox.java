@@ -32,10 +32,10 @@ public class JsonTreeBox extends BorderPane {
         treeView.setContextMenu(initContextMenu(treeView));
 
         this.setCenter(treeView);
-        treeSearchBox = new SearchBox(this, text -> {
+        treeSearchBox = new SearchBox(this, (text, searchOverviewFetcher) -> {
             messageEmitter.clear();
             searchNextForTree(text, messageEmitter);
-        }, text -> {
+        }, (text, searchOverviewFetcher) -> {
             messageEmitter.clear();
             searchPreviousForTree(text, messageEmitter);
         });

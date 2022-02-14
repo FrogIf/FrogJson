@@ -22,12 +22,12 @@ public class JsonTextBox extends BorderPane {
         VirtualizedScrollPane<CodeArea> scrollPane = new VirtualizedScrollPane<>(codeArea);
         super.setCenter(scrollPane);
         this.searchAction = new SearchAction(codeArea, messageEmitter);
-        treeSearchBox = new SearchBox(this, (text) -> {
+        treeSearchBox = new SearchBox(this, (text, searchOverviewFetcher) -> {
             messageEmitter.clear();
-            this.searchAction.search(text, true);
-        }, (text) -> {
+            this.searchAction.search(text, true, searchOverviewFetcher);
+        }, (text, searchOverviewFetcher) -> {
             messageEmitter.clear();
-            this.searchAction.search(text, false);
+            this.searchAction.search(text, false, searchOverviewFetcher);
         });
         this.setOnKeyPressed(keyEvent -> {
             if(keyEvent.isControlDown() && keyEvent.getCode() == KeyCode.F){
@@ -75,7 +75,7 @@ public class JsonTextBox extends BorderPane {
 
         private int lastCaretPos = -1;
 
-        public void search(String searchText, boolean backward/*true -- 向后搜索, false - 向前搜索*/){
+        public void search(String searchText, boolean backward/*true -- 向后搜索, false - 向前搜索*/, SearchBox.SearchOverviewFetcher overviewFetcher){
             if(!searchText.equals(this.searchText)){ // 新的关键字
                 this.searchText = searchText;
                 this.searchResults = null;
@@ -83,6 +83,7 @@ public class JsonTextBox extends BorderPane {
                 buildSearchResult();
             }
 
+            int cursorIndex = -1;
             if(this.searchResults.isEmpty()){
                 messageEmitter.emitWarn("no result found for : " + searchText);
             }else{
@@ -109,26 +110,33 @@ public class JsonTextBox extends BorderPane {
                     int nextIndex = startIndex + 1;
                     if(nextIndex == searchResults.size()){
                         if(!this.reachBottom){
+                            cursorIndex = nextIndex - 1;
                             this.messageEmitter.emitWarn("search reach bottom");
                         }else{
-                            focusFindResult(searchResults.get(0));
+                            cursorIndex = 0;
                         }
                         this.reachBottom = !this.reachBottom;
                     }else{
-                        focusFindResult(searchResults.get(nextIndex));
+                        cursorIndex = nextIndex;
                     }
                 }else{
                     int nextIndex = startIndex - 1;
                     if(nextIndex == -1){
                         if(!this.reachTop){
+                            cursorIndex = 0;
                             this.messageEmitter.emitWarn("search reach top");
                         }else{
-                            focusFindResult(searchResults.get(searchResults.size() - 1));
+                            cursorIndex = searchResults.size() - 1;
                         }
                         this.reachTop = !this.reachTop;
                     }else{
-                        focusFindResult(searchResults.get(nextIndex));
+                        cursorIndex = nextIndex;
                     }
+                }
+
+                if(cursorIndex >= 0){
+                    focusFindResult(searchResults.get(cursorIndex));
+                    overviewFetcher.setSearchOverview(new SearchBox.SearchOverview(searchResults.size() - 1, cursorIndex));
                 }
 
             }
