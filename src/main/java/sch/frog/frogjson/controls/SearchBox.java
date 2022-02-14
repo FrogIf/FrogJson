@@ -1,6 +1,7 @@
 package sch.frog.frogjson.controls;
 
 import javafx.collections.ObservableList;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -8,6 +9,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 
@@ -38,8 +40,9 @@ public class SearchBox extends BorderPane {
         hBoxChildren.add(previous);
 
         this.setLeft(hBox);
-        Button close = new Button("x");
-        close.setOnAction(actionEvent -> parentContainer.setTop(null));
+        Label close = new Label("×");
+        close.setStyle("-fx-font-size: 16; -fx-cursor: hand;");
+        close.setOnMouseClicked(mouseEvent -> parentContainer.setTop(null));
         this.setRight(close);
 
         next.setOnAction(event -> onNextClick.click(searchTextField.getText()));
