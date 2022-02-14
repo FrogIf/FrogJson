@@ -5,9 +5,9 @@ import javafx.application.HostServices;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
+import sch.frog.frogjson.config.GlobalInnerProperties;
 
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 
 public class FrogJsonApplication extends Application {
 
@@ -19,7 +19,7 @@ public class FrogJsonApplication extends Application {
         exceptionHandle();
         FXMLLoader fxmlLoader = new FXMLLoader(FrogJsonApplication.class.getResource("main-view.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 800, 600);
-        stage.setTitle("FrogJson");
+        stage.setTitle("FrogJson " + GlobalInnerProperties.getProperty("application.version"));
         stage.setScene(scene);
         stage.getIcons().add(ImageResources.appIcon);
         stage.show();
@@ -29,35 +29,7 @@ public class FrogJsonApplication extends Application {
         return self.getHostServices();
     }
 
-    private Stage exceptionStage = null;
-
-    private final ExceptionView exceptionView = new ExceptionView();
-
     private void exceptionHandle(){
-        Thread.setDefaultUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-            @Override
-            public void uncaughtException(Thread t, Throwable e) {
-                if(exceptionStage == null){
-                    exceptionStage = new Stage();
-                    Scene secondScene = new Scene(exceptionView, 500, 400);
-                    exceptionStage.setScene(secondScene);
-                    exceptionStage.setTitle("An error occurred");
-                    exceptionStage.getIcons().add(ImageResources.appIcon);
-                }
-
-                Throwable cause = e.getCause();
-                if(cause instanceof InvocationTargetException){
-                    e = ((InvocationTargetException) cause).getTargetException();
-                }
-
-                exceptionView.setException(e);
-                exceptionStage.show();
-                if (exceptionStage.isIconified()) {
-                    exceptionStage.setIconified(false);
-                }else{
-                    exceptionStage.requestFocus();
-                }
-            }
-        });
+        Thread.setDefaultUncaughtExceptionHandler((t, e) -> GlobalExceptionThrower.INSTANCE.throwException(e));
     }
 }
