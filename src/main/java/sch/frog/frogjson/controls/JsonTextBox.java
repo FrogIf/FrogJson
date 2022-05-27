@@ -13,7 +13,7 @@ public class JsonTextBox extends BorderPane {
 
     private final CodeArea codeArea = new CodeArea();
 
-    private final SearchBox treeSearchBox;
+    private final SearchBox textSearchBox;
 
     private final SearchAction searchAction;
 
@@ -22,7 +22,7 @@ public class JsonTextBox extends BorderPane {
         VirtualizedScrollPane<CodeArea> scrollPane = new VirtualizedScrollPane<>(codeArea);
         super.setCenter(scrollPane);
         this.searchAction = new SearchAction(codeArea, messageEmitter);
-        treeSearchBox = new SearchBox(this, (text, searchOverviewFetcher) -> {
+        textSearchBox = new SearchBox(this, (text, searchOverviewFetcher) -> {
             messageEmitter.clear();
             this.searchAction.search(text, true, searchOverviewFetcher);
         }, (text, searchOverviewFetcher) -> {
@@ -31,11 +31,11 @@ public class JsonTextBox extends BorderPane {
         });
         this.setOnKeyPressed(keyEvent -> {
             if(keyEvent.isControlDown() && keyEvent.getCode() == KeyCode.F){
-                this.setTop(treeSearchBox);
-                treeSearchBox.focusSearch();
+                this.setTop(textSearchBox);
+                textSearchBox.focusSearch(codeArea.getSelectedText());
             }
         });
-        treeSearchBox.onClose(this.codeArea::requestFocus);
+        textSearchBox.onClose(this.codeArea::requestFocus);
     }
 
     private void initCodeArea(){

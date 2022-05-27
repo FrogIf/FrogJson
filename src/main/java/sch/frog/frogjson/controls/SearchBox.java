@@ -110,6 +110,13 @@ public class SearchBox extends BorderPane {
     }
 
     public void focusSearch(){
+        this.focusSearch(null);
+    }
+
+    public void focusSearch(String text){
+        if(text != null){
+            searchTextField.setText(text);
+        }
         searchTextField.requestFocus();
     }
 
