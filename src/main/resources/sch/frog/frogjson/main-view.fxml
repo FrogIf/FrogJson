@@ -4,7 +4,7 @@
 <?import javafx.scene.layout.*?>
 
 <?import javafx.geometry.Insets?>
-<VBox prefHeight="600.0" prefWidth="500.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sch.frog.frogjson.MainController">
+<VBox prefHeight="600.0" prefWidth="500.0" xmlns="http://javafx.com/javafx/11" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sch.frog.frogjson.MainController">
     <ToolBar>
         <Button onAction="#onPrettyBtnClick" text="Pretty" />
         <Button onAction="#onCompactBtnClick" text="Compact" />

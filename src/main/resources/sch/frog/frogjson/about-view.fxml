@@ -4,7 +4,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<VBox prefHeight="200.0" prefWidth="200.0" xmlns="http://javafx.com/javafx/16" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sch.frog.frogjson.AboutController">
+<VBox prefHeight="200.0" prefWidth="200.0" xmlns="http://javafx.com/javafx/11" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sch.frog.frogjson.AboutController">
     <HBox alignment="CENTER_LEFT">
         <Label text="作者:">
          <HBox.margin>

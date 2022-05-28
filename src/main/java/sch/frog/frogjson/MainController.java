@@ -14,6 +14,7 @@ import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
 import javafx.stage.Stage;
+import javafx.stage.StageStyle;
 import sch.frog.frogjson.controls.JsonEditor;
 import sch.frog.frogjson.json.JsonElement;
 import sch.frog.frogjson.json.JsonOperator;
@@ -158,6 +159,47 @@ public class MainController implements Initializable {
         }
     }
 
+    private Stage renameStage = null;
+
+    private void openRenameStage() {
+        if(renameStage == null){
+            renameStage = new Stage();
+            FXMLLoader fxmlLoader = new FXMLLoader(FrogJsonApplication.class.getResource("rename-tab.fxml"));
+            Scene secondScene = null;
+            try {
+                secondScene = new Scene(fxmlLoader.load(), 300, 200);
+            } catch (IOException e) {
+                GlobalExceptionThrower.INSTANCE.throwException(e);
+            }
+            final RenameTabController renameTabController = fxmlLoader.getController();
+            renameTabController.setConfirmCallback(name -> {
+                if(name == null){ return; }
+                Tab selectTab = mainTabPane.getSelectionModel().getSelectedItem();
+                if(selectTab != null){
+                    selectTab.setText(name);
+                }
+            });
+            renameStage.setScene(secondScene);
+            renameStage.resizableProperty().setValue(false);
+            renameStage.setTitle("Rename");
+            renameStage.getIcons().add(ImageResources.appIcon);
+            renameStage.initStyle(StageStyle.UTILITY);
+            renameStage.setAlwaysOnTop(true);
+            renameStage.setOnShown(event -> {
+                Tab selectTab = mainTabPane.getSelectionModel().getSelectedItem();
+                if(selectTab != null){
+                    renameTabController.setOriginTabName(selectTab.getText());
+                }
+            });
+        }
+        renameStage.show();
+        if(renameStage.isIconified()){  // 判断是否最小化
+            renameStage.setIconified(false);
+        }else{
+            renameStage.requestFocus();
+        }
+    }
+
     private ContextMenu initTabPaneContextMenu(TabPane tabPane) {
         ContextMenu treeContextMenu = new ContextMenu();
         MenuItem closeSelect = new MenuItem("Close");
@@ -224,7 +266,18 @@ public class MainController implements Initializable {
             }
         });
 
+        MenuItem renameTab = new MenuItem("Rename");
+        renameTab.setOnAction(actionEvent -> {
+            Tab selectTab = tabPane.getSelectionModel().getSelectedItem();
+            if(selectTab != null){
+                openRenameStage();
+            }else{
+                messageEmitter.emitWarn("no tab select");
+            }
+        });
+
         ObservableList<MenuItem> items = treeContextMenu.getItems();
+        items.add(renameTab);
         items.add(closeOthers);
         items.add(closeAll);
         items.add(closeToLeft);
