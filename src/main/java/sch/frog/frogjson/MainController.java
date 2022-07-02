@@ -13,6 +13,7 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import sch.frog.frogjson.controls.JsonEditor;
@@ -20,9 +21,14 @@ import sch.frog.frogjson.json.JsonElement;
 import sch.frog.frogjson.json.JsonOperator;
 import sch.frog.frogjson.json.JsonParseException;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Iterator;
+import java.util.List;
 import java.util.ResourceBundle;
 
 public class MainController implements Initializable {
@@ -284,5 +290,37 @@ public class MainController implements Initializable {
         items.add(closeToRight);
         items.add(closeSelect);
         return treeContextMenu;
+    }
+
+    @FXML
+    protected void onLoadClick(){
+        FileChooser fileChooser = new FileChooser();
+        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("ALL files (*.*)", "*.*");
+        fileChooser.getExtensionFilters().add(extFilter);
+        List<File> files = fileChooser.showOpenMultipleDialog(FrogJsonApplication.self.getPrimaryStage());
+        if(files != null){
+            for (File file : files) {
+                EditTabManager.TabElement tabElement = EditTabManager.addTab(mainTabPane, file.getName(), this.messageEmitter);
+                try (
+                        FileReader fileReader = new FileReader(file);
+                        BufferedReader reader = new BufferedReader(fileReader)
+                        ){
+                    StringBuilder sb = new StringBuilder();
+                    String line;
+                    boolean start = true;
+                    while((line = reader.readLine()) != null){
+                        if(!start){
+                            sb.append('\n');
+                        }else{
+                            start = false;
+                        }
+                        sb.append(line);
+                    }
+                    tabElement.getJsonEditor().setJsonContent(sb.toString());
+                } catch (IOException e) {
+                    messageEmitter.emitError(e.getMessage());
+                }
+            }
+        }
     }
 }

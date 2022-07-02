@@ -13,6 +13,8 @@ public class FrogJsonApplication extends Application {
 
     public static FrogJsonApplication self;
 
+    private Stage primaryStage;
+
     @Override
     public void start(Stage stage) throws IOException {
         self = this;
@@ -23,6 +25,7 @@ public class FrogJsonApplication extends Application {
         stage.setScene(scene);
         stage.getIcons().add(ImageResources.appIcon);
         stage.show();
+        this.primaryStage = stage;
     }
 
     public static HostServices getAppHostServices(){
@@ -31,5 +34,9 @@ public class FrogJsonApplication extends Application {
 
     private void exceptionHandle(){
         Thread.setDefaultUncaughtExceptionHandler((t, e) -> GlobalExceptionThrower.INSTANCE.throwException(e));
+    }
+
+    public Stage getPrimaryStage(){
+        return this.primaryStage;
     }
 }

@@ -4,18 +4,23 @@
 <?import javafx.scene.layout.*?>
 
 <?import javafx.geometry.Insets?>
-<VBox prefHeight="600.0" prefWidth="500.0" xmlns="http://javafx.com/javafx/11" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sch.frog.frogjson.MainController">
+<VBox prefHeight="600.0" xmlns="http://javafx.com/javafx/11" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sch.frog.frogjson.MainController">
     <ToolBar>
-        <Button onAction="#onPrettyBtnClick" text="Pretty" />
-        <Button onAction="#onCompactBtnClick" text="Compact" />
-        <Button onAction="#onFromStringBtnClick" text="FromString" />
-        <Button onAction="#onToStringBtnClick" text="ToString" />
-        <Button onAction="#onTreeBtnClick" text="Tree" />
-        <HBox>
-            <TextField fx:id="tabTitleText" maxHeight="27.0" maxWidth="-Infinity" minHeight="27.0" minWidth="-Infinity" prefHeight="27.0" prefWidth="80.0" />
-            <Button onAction="#onNewTabBtnClick" text="+" prefHeight="27.0" maxHeight="27.0" minHeight="27.0" />
-        </HBox>
-        <Button onAction="#onAboutBtnClick" style="-fx-background-color: #0090ff;" text="i" textFill="WHITE" />
+            <Button onAction="#onLoadClick" text="Load" />
+            <Button onAction="#onPrettyBtnClick" text="Pretty" />
+            <Button onAction="#onCompactBtnClick" text="Compact" />
+            <Button onAction="#onFromStringBtnClick" text="FromString" />
+            <Button onAction="#onToStringBtnClick" text="ToString" />
+            <Button onAction="#onTreeBtnClick" text="Tree" />
+            <HBox style="-fx-border-color:#ababab;-fx-border-width: 1;-fx-border-radius:3;">
+                <HBox.margin>
+                    <Insets left="10"/>
+                </HBox.margin>
+                <TextField fx:id="tabTitleText" maxHeight="27.0" maxWidth="-Infinity" minHeight="27.0" minWidth="-Infinity" prefHeight="27.0" prefWidth="80.0" />
+                <Button onAction="#onNewTabBtnClick" text="+" prefHeight="27.0" maxHeight="27.0" minHeight="27.0" />
+            </HBox>
+            <Pane HBox.hgrow="ALWAYS"><!-- nothing --></Pane>
+            <Button alignment="CENTER_RIGHT" onAction="#onAboutBtnClick" style="-fx-background-color: #0090ff;" text="i" textFill="WHITE" />
     </ToolBar>
     <TabPane fx:id="mainTabPane" prefHeight="229.0" prefWidth="290.0" VBox.vgrow="ALWAYS">
     </TabPane>
