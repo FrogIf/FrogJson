@@ -38,9 +38,9 @@ java -jar launch4j.jar
 
 2. Basic页签配置
 
-Output file - 配置输出文件路径以及文件名(需要加上.exe后缀)
-Jar - 配置可执行jar文件, 即maven生成的```FrogJson-0.1-jar-with-dependencies.jar```
-Icon - 配置程序图标, 图标资源在```resource\logo.png```目录中
+ * Output file - 配置输出文件路径以及文件名(需要加上.exe后缀)
+ * Jar - 配置可执行jar文件, 即maven生成的```FrogJson-0.1-jar-with-dependencies.jar```
+ * Icon - 配置程序图标, 图标资源在```resource\logo.png```目录中
 
 3. JRE页签
 
