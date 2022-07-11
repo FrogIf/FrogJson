@@ -292,13 +292,27 @@ public class MainController implements Initializable {
         return treeContextMenu;
     }
 
+    private File loadDir = null;
+
     @FXML
     protected void onLoadClick(){
         FileChooser fileChooser = new FileChooser();
+        if(this.loadDir != null){
+            fileChooser.setInitialDirectory(this.loadDir);  // 指定上次加载路径为当前加载路径
+        }
         FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("ALL files (*.*)", "*.*");
         fileChooser.getExtensionFilters().add(extFilter);
         List<File> files = fileChooser.showOpenMultipleDialog(FrogJsonApplication.self.getPrimaryStage());
         if(files != null){
+            if(!files.isEmpty()){
+                File file = files.get(0);
+                if(file.isFile()){
+                    File dir = file.getParentFile();
+                    if(dir.isDirectory()){
+                        this.loadDir = dir;
+                    }
+                }
+            }
             for (File file : files) {
                 EditTabManager.TabElement tabElement = EditTabManager.addTab(mainTabPane, file.getName(), this.messageEmitter);
                 try (
