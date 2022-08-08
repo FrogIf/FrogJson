@@ -26,7 +26,7 @@
         </VBox.margin>
     </HBox>
     <HBox>
-        <TitledPane text="免责声明" HBox.hgrow="ALWAYS">
+        <TitledPane text="免责声明" HBox.hgrow="ALWAYS" collapsible="false">
             <TextArea editable="false" wrapText="true" text="本软件仅供学习交流使用, 如造成任何损失, 概不负责." />
         </TitledPane>
     </HBox>
