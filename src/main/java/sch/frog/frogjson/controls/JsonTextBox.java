@@ -1,10 +1,14 @@
 package sch.frog.frogjson.controls;
 
+import javafx.collections.ObservableList;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
+import sch.frog.frogjson.ClipboardUtil;
 import sch.frog.frogjson.MessageEmitter;
 
 import java.util.ArrayList;
@@ -31,8 +35,7 @@ public class JsonTextBox extends BorderPane {
         });
         this.setOnKeyPressed(keyEvent -> {
             if(keyEvent.isControlDown() && keyEvent.getCode() == KeyCode.F){
-                this.setTop(textSearchBox);
-                textSearchBox.focusSearch(codeArea.getSelectedText());
+                this.searchBegin();
             }
         });
         textSearchBox.onClose(this.codeArea::requestFocus);
@@ -43,6 +46,44 @@ public class JsonTextBox extends BorderPane {
         codeArea.prefHeightProperty().bind(this.heightProperty());
         codeArea.prefWidthProperty().bind(this.widthProperty());
         codeArea.textProperty().addListener((observableValue, s, t1) -> searchAction.reset());
+        codeArea.setContextMenu(initContextMenu());
+    }
+
+    private ContextMenu initContextMenu(){
+        ContextMenu contextMenu = new ContextMenu();
+        MenuItem copy = new MenuItem("Copy");
+        copy.setOnAction(event -> {
+            String selectedText = codeArea.getSelectedText();
+            if(selectedText != null && !"".equals(selectedText)){
+                ClipboardUtil.putToClipboard(selectedText);
+            }
+        });
+        MenuItem find = new MenuItem("Find");
+        find.setOnAction(event -> {
+            String selectedText = codeArea.getSelectedText();
+            if(selectedText != null && !"".equals(selectedText)){
+                this.searchBegin();
+            }
+        });
+        MenuItem undo = new MenuItem("Undo");
+        undo.setOnAction(event -> {
+            codeArea.undo();
+        });
+        MenuItem redo = new MenuItem("Redo");
+        redo.setOnAction(event -> {
+            codeArea.redo();
+        });
+        ObservableList<MenuItem> items = contextMenu.getItems();
+        items.add(copy);
+        items.add(find);
+        items.add(undo);
+        items.add(redo);
+        return contextMenu;
+    }
+
+    private void searchBegin(){
+        this.setTop(textSearchBox);
+        textSearchBox.focusSearch(codeArea.getSelectedText());
     }
 
     public String getContent() {
