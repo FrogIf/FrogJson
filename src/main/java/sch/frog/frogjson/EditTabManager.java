@@ -9,7 +9,7 @@ class EditTabManager {
     private static  int tabIndex = 0;
 
     private static String generateTitle(){
-        return "   Tab " + (tabIndex++) + "   ";
+        return "Tab " + (tabIndex++);
     }
 
     public static void addTab(TabPane tabPane, MessageEmitter emitter){
@@ -32,8 +32,8 @@ class EditTabManager {
     }
 
     public static class TabElement{
-        private Tab tab;
-        private JsonEditor jsonEditor;
+        private final Tab tab;
+        private final JsonEditor jsonEditor;
 
         public TabElement(Tab tab, JsonEditor jsonEditor) {
             this.tab = tab;
