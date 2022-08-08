@@ -6,7 +6,7 @@
 
     <groupId>sch.frog</groupId>
     <artifactId>FrogJson</artifactId>
-    <version>0.3</version>
+    <version>1.0</version>
     <name>FrogJson</name>
 
     <properties>
