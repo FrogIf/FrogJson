@@ -1,7 +1,10 @@
 package sch.frog.frogjson;
 
 import javafx.scene.control.TreeItem;
-import sch.frog.frogjson.json.*;
+import sch.frog.frogjson.json.IJsonValueWriter;
+import sch.frog.frogjson.json.JsonArray;
+import sch.frog.frogjson.json.JsonObject;
+import sch.frog.frogjson.json.JsonValue;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -9,9 +12,9 @@ import java.util.Stack;
 
 public class TreeStructJsonWriter implements IJsonValueWriter {
 
-    private final TreeItem<String> root = new TreeItem<>(FrogJsonConstants.TREE_ROOT_NAME);
+    private final TreeItem<TreeNodeInfo> root = new TreeItem<>(new TreeNodeInfo(FrogJsonConstants.TREE_ROOT_NAME));
 
-    private final Stack<TreeItem<String>> cursorParentStack = new Stack<>();
+    private final Stack<TreeItem<TreeNodeInfo>> cursorParentStack = new Stack<>();
 
     private final static char MAP_CHAR = ':';
 
@@ -37,64 +40,62 @@ public class TreeStructJsonWriter implements IJsonValueWriter {
 
     @Override
     public void writeObject(JsonObject jsonObject) {
-        TreeItem<String> parent;
+        TreeItem<TreeNodeInfo> parent;
         if(!cursorParentStack.isEmpty()){
             parent = cursorParentStack.peek();
         }else{
             parent = root;
         }
         Iterator<Map.Entry<String, JsonValue<?>>> iterator = jsonObject.getIterator();
-        StringBuilder itemText = new StringBuilder();
         while (iterator.hasNext()) {
-            itemText.delete(0, itemText.length());
             Map.Entry<String, JsonValue<?>> entry = iterator.next();
-            TreeItem<String> node = new TreeItem<>();
-            itemText.append(entry.getKey());
+            TreeItem<TreeNodeInfo> node = new TreeItem<>();
+
+            TreeNodeInfo treeNodeInfo = new TreeNodeInfo(entry.getKey());
 
             cursorParentStack.push(node);
             entry.getValue().write(this);
             cursorParentStack.pop();
 
             if(this.valueString != null){
-                itemText.append(SPACE).append(MAP_CHAR).append(SPACE).append(this.valueString);
+                treeNodeInfo.setValue(this.valueString);
                 this.valueString = null;
             }
-            node.setValue(itemText.toString());
+            node.setValue(treeNodeInfo);
             parent.getChildren().add(node);
         }
     }
 
     @Override
     public void writeArray(JsonArray array) {
-        TreeItem<String> parent = null;
+        TreeItem<TreeNodeInfo> parent = null;
         if(!cursorParentStack.isEmpty()){
             parent = cursorParentStack.peek();
         }else{
             parent = root;
         }
         Iterator<JsonValue<?>> iterator = array.getIterator();
-        StringBuilder itemText = new StringBuilder();
         int index = 0;
         while (iterator.hasNext()) {
-            itemText.delete(0, itemText.length());
             JsonValue<?> value = iterator.next();
-            TreeItem<String> node = new TreeItem<>();
-            itemText.append(ARRAY_BEGIN).append(index).append(ARRAY_END);
+            TreeItem<TreeNodeInfo> node = new TreeItem<>();
+            TreeNodeInfo treeNodeInfo = new TreeNodeInfo(String.valueOf(ARRAY_BEGIN) + index + ARRAY_END);
+            treeNodeInfo.setArrayElement(true);
             cursorParentStack.push(node);
             value.write(this);
             cursorParentStack.pop();
 
             if(this.valueString != null){
-                itemText.append(MAP_CHAR).append(this.valueString);
+                treeNodeInfo.setValue(this.valueString);
                 this.valueString = null;
             }
-            node.setValue(itemText.toString());
+            node.setValue(treeNodeInfo);
             parent.getChildren().add(node);
             index++;
         }
     }
 
-    public TreeItem<String> getRoot(){
+    public TreeItem<TreeNodeInfo> getRoot(){
         return this.root;
     }
 

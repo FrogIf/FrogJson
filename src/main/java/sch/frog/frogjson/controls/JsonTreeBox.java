@@ -2,6 +2,7 @@ package sch.frog.frogjson.controls;
 
 import javafx.collections.ObservableList;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Menu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -9,13 +10,14 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
 import sch.frog.frogjson.ClipboardUtil;
 import sch.frog.frogjson.MessageEmitter;
+import sch.frog.frogjson.TreeNodeInfo;
 
 import java.util.Iterator;
 import java.util.Stack;
 
 public class JsonTreeBox extends BorderPane {
 
-    private final TreeView<String> treeView;
+    private final TreeView<TreeNodeInfo> treeView;
 
     private final SearchBox treeSearchBox;
 
@@ -50,63 +52,91 @@ public class JsonTreeBox extends BorderPane {
         treeSearchBox.onClose(treeView::requestFocus);
     }
 
-    private ContextMenu initContextMenu(final TreeView<String> treeView) {
+    private ContextMenu initContextMenu(final TreeView<TreeNodeInfo> treeView) {
         ContextMenu treeContextMenu = new ContextMenu();
-        MenuItem copy = new MenuItem("Copy");
-        copy.setOnAction(actionEvent -> {
+
+        Menu menu = new Menu("Copy");
+        MenuItem copyValue = new MenuItem("Copy Value");
+        copyValue.setOnAction(event -> {
+            this.copySelectValue();
+        });
+        MenuItem copyKey = new MenuItem("Copy Key");
+        copyKey.setOnAction(event -> {
+            this.copySelectKey();
+        });
+        MenuItem copyAll = new MenuItem("Copy All");
+        copyAll.setOnAction(actionEvent -> {
             this.copySelectContent();
         });
+        menu.getItems().addAll(copyValue, copyKey, copyAll);
+
         MenuItem collapse = new MenuItem("Collapse All");
         collapse.setOnAction(actionEvent -> {
-            TreeItem<String> selectedItem = treeView.getSelectionModel().getSelectedItem();
+            TreeItem<TreeNodeInfo> selectedItem = treeView.getSelectionModel().getSelectedItem();
             if(selectedItem != null){
                 collapseOrExpand(selectedItem, false);
             }
         });
         MenuItem expand = new MenuItem("Expand All");
         expand.setOnAction(actionEvent -> {
-            TreeItem<String> selectedItem = treeView.getSelectionModel().getSelectedItem();
+            TreeItem<TreeNodeInfo> selectedItem = treeView.getSelectionModel().getSelectedItem();
             if(selectedItem != null){
                 collapseOrExpand(selectedItem, true);
             }
         });
         ObservableList<MenuItem> items = treeContextMenu.getItems();
-        items.add(copy);
+        items.add(menu);
         items.add(expand);
         items.add(collapse);
         return treeContextMenu;
     }
 
-    private void copySelectContent(){
-        TreeItem<String> selectedItem = treeView.getSelectionModel().getSelectedItem();
+    private void copySelectValue(){
+        TreeItem<TreeNodeInfo> selectedItem = treeView.getSelectionModel().getSelectedItem();
         if (selectedItem != null) {
-            String value = selectedItem.getValue();
-            ClipboardUtil.putToClipboard(value);
+            TreeNodeInfo value = selectedItem.getValue();
+            ClipboardUtil.putToClipboard(value.getValue());
         }
     }
 
-    private void collapseOrExpand(TreeItem<String> treeItem, boolean expand){
+    private void copySelectKey(){
+        TreeItem<TreeNodeInfo> selectedItem = treeView.getSelectionModel().getSelectedItem();
+        if (selectedItem != null) {
+            TreeNodeInfo value = selectedItem.getValue();
+            ClipboardUtil.putToClipboard(value.getKey());
+        }
+    }
+
+    private void copySelectContent(){
+        TreeItem<TreeNodeInfo> selectedItem = treeView.getSelectionModel().getSelectedItem();
+        if (selectedItem != null) {
+            TreeNodeInfo value = selectedItem.getValue();
+            ClipboardUtil.putToClipboard(value.toString());
+        }
+    }
+
+    private void collapseOrExpand(TreeItem<TreeNodeInfo> treeItem, boolean expand){
         foreachTree(treeItem, node -> {
             node.setExpanded(expand);
             return true;
         });
     }
 
-    private void foreachTree(TreeItem<String> start, ForeachAction action){
+    private void foreachTree(TreeItem<TreeNodeInfo> start, ForeachAction action){
         if(!action.doSomething(start)){
             return;
         }
-        ObservableList<TreeItem<String>> items = start.getChildren();
+        ObservableList<TreeItem<TreeNodeInfo>> items = start.getChildren();
         if(items != null && !items.isEmpty()){
-            Stack<Iterator<TreeItem<String>>> rubberBand = new Stack<>();
+            Stack<Iterator<TreeItem<TreeNodeInfo>>> rubberBand = new Stack<>();
             rubberBand.push(items.iterator());
             while(!rubberBand.isEmpty()){
                 while(rubberBand.peek().hasNext()){
-                    TreeItem<String> item = rubberBand.peek().next();
+                    TreeItem<TreeNodeInfo> item = rubberBand.peek().next();
                     if(!action.doSomething(item)){
                         return;
                     }
-                    ObservableList<TreeItem<String>> children = item.getChildren();
+                    ObservableList<TreeItem<TreeNodeInfo>> children = item.getChildren();
                     if(children != null && !children.isEmpty()){
                         rubberBand.push(children.iterator());
                     }
@@ -117,12 +147,12 @@ public class JsonTreeBox extends BorderPane {
         action.searchFinish();
     }
 
-    public void setTreeRoot(TreeItem<String> root) {
+    public void setTreeRoot(TreeItem<TreeNodeInfo> root) {
         this.treeView.setRoot(root);
     }
 
     private interface ForeachAction{
-        boolean doSomething(TreeItem<String> node);
+        boolean doSomething(TreeItem<TreeNodeInfo> node);
         default void searchFinish(){ /* do nothing */ }
     }
 
@@ -131,8 +161,8 @@ public class JsonTreeBox extends BorderPane {
             emitter.emitWarn("please input search keyword");
             return;
         }
-        TreeItem<String> start = treeView.getSelectionModel().getSelectedItem();
-        TreeItem<String> root = treeView.getRoot();
+        TreeItem<TreeNodeInfo> start = treeView.getSelectionModel().getSelectedItem();
+        TreeItem<TreeNodeInfo> root = treeView.getRoot();
         if(start == null){
             start = root;
         }
@@ -147,8 +177,8 @@ public class JsonTreeBox extends BorderPane {
             emitter.emitWarn("please input search keyword");
             return;
         }
-        TreeItem<String> start = treeView.getSelectionModel().getSelectedItem();
-        TreeItem<String> root = treeView.getRoot();
+        TreeItem<TreeNodeInfo> start = treeView.getSelectionModel().getSelectedItem();
+        TreeItem<TreeNodeInfo> root = treeView.getRoot();
         if(start == null){
             start = root;
         }
@@ -160,9 +190,9 @@ public class JsonTreeBox extends BorderPane {
 
     private static class TreeSearchForeachActionForNext implements ForeachAction{
 
-        private TreeItem<String> start;
+        private TreeItem<TreeNodeInfo> start;
 
-        private final TreeView<String> tree;
+        private final TreeView<TreeNodeInfo> tree;
 
         private String searchText;
 
@@ -170,7 +200,7 @@ public class JsonTreeBox extends BorderPane {
 
         private boolean reachBottom = false;
 
-        public TreeSearchForeachActionForNext(TreeView<String> treeView, MessageEmitter emitter) {
+        public TreeSearchForeachActionForNext(TreeView<TreeNodeInfo> treeView, MessageEmitter emitter) {
             this.tree = treeView;
             this.emitter = emitter;
         }
@@ -178,12 +208,12 @@ public class JsonTreeBox extends BorderPane {
         boolean matchStart = false;
 
         @Override
-        public boolean doSomething(TreeItem<String> node) {
+        public boolean doSomething(TreeItem<TreeNodeInfo> node) {
             if(start == node){
                 matchStart = true;
             }else if(matchStart){
-                String value = node.getValue();
-                if(value != null && value.contains(searchText)){
+                TreeNodeInfo value = node.getValue();
+                if(value != null && value.toString().contains(searchText)){
                     tree.getSelectionModel().select(node);
                     tree.scrollTo(tree.getRow(node));
                     return false;
@@ -198,7 +228,7 @@ public class JsonTreeBox extends BorderPane {
             this.reachBottom = true;
         }
 
-        public void prepareSearch(TreeItem<String> start, String text){
+        public void prepareSearch(TreeItem<TreeNodeInfo> start, String text){
             this.start = start;
             if(this.searchText != null && this.searchText.equals(text) && this.reachBottom){
                 this.start = tree.getRoot();
@@ -211,11 +241,11 @@ public class JsonTreeBox extends BorderPane {
 
     private static class TreeSearchForeachActionForPrevious implements ForeachAction{
 
-        TreeItem<String> preMatch;
+        TreeItem<TreeNodeInfo> preMatch;
 
-        TreeItem<String> start;
+        TreeItem<TreeNodeInfo> start;
 
-        TreeView<String> tree;
+        TreeView<TreeNodeInfo> tree;
 
         String searchText;
 
@@ -223,15 +253,15 @@ public class JsonTreeBox extends BorderPane {
 
         boolean reachTop;
 
-        public TreeSearchForeachActionForPrevious(TreeView<String> treeView, MessageEmitter emitter) {
+        public TreeSearchForeachActionForPrevious(TreeView<TreeNodeInfo> treeView, MessageEmitter emitter) {
             this.tree = treeView;
             this.emitter = emitter;
         }
 
         @Override
-        public boolean doSomething(TreeItem<String> node) {
-            String value = node.getValue();
-            if(start != node && value != null && value.contains(searchText)){
+        public boolean doSomething(TreeItem<TreeNodeInfo> node) {
+            TreeNodeInfo value = node.getValue();
+            if(start != node && value != null && value.toString().contains(searchText)){
                 preMatch = node;
             }
             if(start == node){
@@ -256,7 +286,7 @@ public class JsonTreeBox extends BorderPane {
             }
         }
 
-        public void prepareSearch(TreeItem<String> start, String text){
+        public void prepareSearch(TreeItem<TreeNodeInfo> start, String text){
             this.start = start;
             if(this.searchText != null && this.searchText.equals(text) && this.reachTop){
                 this.start = null;

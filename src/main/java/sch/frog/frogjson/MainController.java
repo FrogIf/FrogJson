@@ -23,7 +23,6 @@ import sch.frog.frogjson.json.JsonParseException;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
@@ -118,14 +117,14 @@ public class MainController implements Initializable {
         if (editor != null) {
             String json = editor.getJson();
             if (json == null || json.isBlank()) {
-                editor.openTree(new TreeItem<>(FrogJsonConstants.TREE_ROOT_NAME));
+                editor.openTree(new TreeItem<>(new TreeNodeInfo(FrogJsonConstants.TREE_ROOT_NAME)));
                 return;
             }
             TreeStructJsonWriter writer = new TreeStructJsonWriter();
             try {
                 JsonElement jsonElement = JsonOperator.parse(json);
                 jsonElement.customWrite(writer);
-                TreeItem<String> root = writer.getRoot();
+                TreeItem<TreeNodeInfo> root = writer.getRoot();
                 editor.openTree(root);
             } catch (JsonParseException e) {
                 messageEmitter.emitError(e.getMessage());

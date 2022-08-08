@@ -5,6 +5,7 @@ import javafx.scene.Node;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TreeItem;
 import sch.frog.frogjson.MessageEmitter;
+import sch.frog.frogjson.TreeNodeInfo;
 
 public class JsonEditor extends SplitPane {
 
@@ -30,7 +31,7 @@ public class JsonEditor extends SplitPane {
         jsonTextBox.setContent(json);
     }
 
-    public void openTree(TreeItem<String> root) {
+    public void openTree(TreeItem<TreeNodeInfo> root) {
         if (jsonTreeBox == null) {
             jsonTreeBox = new JsonTreeBox(this.messageEmitter);
             super.getItems().add(jsonTreeBox);
