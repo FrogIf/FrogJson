@@ -1,9 +1,11 @@
 package sch.frog.frogjson.controls;
 
+import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
@@ -12,6 +14,8 @@ import sch.frog.frogjson.ClipboardUtil;
 import sch.frog.frogjson.MessageEmitter;
 
 import java.util.ArrayList;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class JsonTextBox extends BorderPane {
 
@@ -47,6 +51,19 @@ public class JsonTextBox extends BorderPane {
         codeArea.prefWidthProperty().bind(this.widthProperty());
         codeArea.textProperty().addListener((observableValue, s, t1) -> searchAction.reset());
         codeArea.setContextMenu(initContextMenu());
+        // 换行后自动缩进
+        final Pattern whiteSpace = Pattern.compile( "^\\s+" );
+        codeArea.addEventHandler( KeyEvent.KEY_PRESSED, e ->
+        {
+            if(e.getCode() == KeyCode.ENTER){
+                int caretPosition = codeArea.getCaretPosition();
+                int currentParagraph = codeArea.getCurrentParagraph();
+                Matcher m0 = whiteSpace.matcher(codeArea.getParagraph(currentParagraph - 1).getSegments().get(0));
+                if(m0.find()){ Platform.runLater(() -> codeArea.insertText(caretPosition, m0.group())); }
+            }
+        });
+        JsonHighlight highlight = JsonHighlight.getInstance();
+        highlight.enableHighLight(codeArea);
     }
 
     private ContextMenu initContextMenu(){

@@ -4,6 +4,7 @@ module sch.frog.frogjson {
     requires org.fxmisc.richtext;
     requires org.fxmisc.flowless;
     requires java.desktop;
+    requires reactfx;
 
     opens sch.frog.frogjson to javafx.fxml;
     exports sch.frog.frogjson;

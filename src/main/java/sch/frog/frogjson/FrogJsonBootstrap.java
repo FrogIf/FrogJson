@@ -5,6 +5,10 @@ import javafx.application.Application;
 public class FrogJsonBootstrap {
 
     public static void main(String[] args){
-        Application.launch(FrogJsonApplication.class, args);
+        try{
+            Application.launch(FrogJsonApplication.class, args);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 }
