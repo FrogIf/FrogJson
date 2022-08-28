@@ -1,5 +1,6 @@
 package sch.frog.frogjson.json;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Stack;
@@ -332,5 +333,54 @@ public class JsonLexicalAnalyzer {
 
     private static boolean isHex(char ch) {
         return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f');
+    }
+
+    public static List<BracketPair> getBracketPair(List<JsonToken> tokens){
+        ArrayList<BracketPair> pairs = new ArrayList<>();
+        if(tokens == null || tokens.isEmpty()){ return pairs; }
+        Stack<JsonToken> stack = new Stack<>();
+        for (JsonToken token : tokens) {
+            if(token.getType() == JsonToken.Type.STRUCTURE){
+                String literal = token.getLiteral();
+                switch (literal){
+                    case "{":
+                    case "[":
+                        stack.push(token);
+                        break;
+                    case "}":
+                        if(!stack.isEmpty() && "{".equals(stack.peek().getLiteral())){
+                            pairs.add(new BracketPair(stack.pop(), token));
+                        }
+                        break;
+                    case "]":
+                        if(!stack.isEmpty() && "[".equals(stack.peek().getLiteral())){
+                            pairs.add(new BracketPair(stack.pop(), token));
+                        }
+                        break;
+                }
+            }
+        }
+        return pairs;
+    }
+
+    /**
+     * 括号对
+     */
+    public static class BracketPair{
+        private final JsonToken start;
+        private final JsonToken end;
+
+        public BracketPair(JsonToken start, JsonToken end) {
+            this.start = start;
+            this.end = end;
+        }
+
+        public JsonToken getStart() {
+            return start;
+        }
+
+        public JsonToken getEnd() {
+            return end;
+        }
     }
 }

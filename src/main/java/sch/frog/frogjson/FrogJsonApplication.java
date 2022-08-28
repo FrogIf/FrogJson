@@ -21,7 +21,7 @@ public class FrogJsonApplication extends Application {
         exceptionHandle();
         FXMLLoader fxmlLoader = new FXMLLoader(FrogJsonApplication.class.getResource("main-view.fxml"));
         Scene scene = new Scene(fxmlLoader.load(), 800, 600);
-        scene.getStylesheets().add(FrogJsonApplication.class.getResource("css/json-highlight.css").toExternalForm());
+        scene.getStylesheets().add(FrogJsonApplication.class.getResource("css/json-assist.css").toExternalForm());
         stage.setTitle("FrogJson " + GlobalInnerProperties.getProperty("application.version"));
         stage.setScene(scene);
         stage.getIcons().add(ImageResources.appIcon);

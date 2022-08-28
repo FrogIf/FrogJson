@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 
 public class JsonTextBox extends BorderPane {
 
-    private final CodeArea codeArea = new CodeArea();
+    private final CustomCodeArea codeArea = new CustomCodeArea();
 
     private final SearchBox textSearchBox;
 
@@ -62,8 +62,8 @@ public class JsonTextBox extends BorderPane {
                 if(m0.find()){ Platform.runLater(() -> codeArea.insertText(caretPosition, m0.group())); }
             }
         });
-        JsonHighlight highlight = JsonHighlight.getInstance();
-        highlight.enableHighLight(codeArea);
+        JsonAssist highlight = JsonAssist.getInstance();
+        highlight.enableAssist(codeArea);
     }
 
     private ContextMenu initContextMenu(){
