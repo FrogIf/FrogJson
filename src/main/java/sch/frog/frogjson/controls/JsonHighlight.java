@@ -5,8 +5,8 @@ import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.model.StyleSpans;
 import org.fxmisc.richtext.model.StyleSpansBuilder;
 import sch.frog.frogjson.GlobalApplicationLifecycleUtil;
+import sch.frog.frogjson.json.JsonLexicalAnalyzer;
 import sch.frog.frogjson.json.JsonToken;
-import sch.frog.frogjson.json.JsonUtil;
 import sch.frog.frogjson.util.StringUtils;
 
 import java.time.Duration;
@@ -78,7 +78,7 @@ public class JsonHighlight {
             spansBuilder.add(Collections.emptyList(), 0);
             return spansBuilder.create();
         }
-        List<JsonToken> tokens = JsonUtil.tokenization(text);
+        List<JsonToken> tokens = JsonLexicalAnalyzer.lexicalAnalysis(text, false);
         ArrayList<String> preStyles = null;
         ArrayList<String> cursorStyles = null;
         for (JsonToken token : tokens) {

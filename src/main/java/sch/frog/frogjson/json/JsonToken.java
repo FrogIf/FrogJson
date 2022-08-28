@@ -2,19 +2,16 @@ package sch.frog.frogjson.json;
 
 public class JsonToken {
 
-    private int start;
+    private final int start;
 
-    private String literal;
+    private final String literal;
 
-    private Type type;
+    private final Type type;
 
-    private boolean error;
+    private final boolean error;
 
     public JsonToken(int start, String literal, Type type) {
-        this.start = start;
-        this.literal = literal;
-        this.type = type;
-        this.error = false;
+        this(start, literal, type, false);
     }
 
     public JsonToken(int start, String literal, Type type, boolean error) {
@@ -41,13 +38,37 @@ public class JsonToken {
     }
 
     public enum Type{
+        /**
+         * key, 字符串
+         */
         KEY,
+        /**
+         * 值, 字符串
+         */
         STR_VALUE,
+        /**
+         * 值, 布尔类型
+         */
         BOOL,
+        /**
+         * 值, 数值类型, 支持科学计数法
+         */
         NUMBER,
+        /**
+         * 值, null
+         */
         NULL,
+        /**
+         * 结构token: {}[],:
+         */
         STRUCTURE,
+        /**
+         * 空格, 换行, 制表符等
+         */
         BLANK,
+        /**
+         * 未识别的
+         */
         UNKNOWN;
     }
 }

@@ -1,383 +1,336 @@
 package sch.frog.frogjson.json;
 
-import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Stack;
 
-class JsonLexicalAnalyzer {
+public class JsonLexicalAnalyzer {
 
     private JsonLexicalAnalyzer() {
         // do nothing
     }
 
-    public static List<Token> lexicalAnalysis(String json) throws JsonParseException {
-        List<Token> tokens = new ArrayList<>();
-        int rowIndex = 0;
-        int colIndex = 0;
-
-        for (int i = 0, len = json.length(); i < len; ) {
+    public static List<JsonToken> lexicalAnalysis(String json, boolean abortWhenIncorrect){
+        LinkedList<JsonToken> tokens = new LinkedList<>();
+        StringBuilder illegalStr = new StringBuilder();
+        boolean waitValue = false;
+        Stack<Integer> objOrArr = new Stack<>(); // 0 - obj, 1 - array
+        String lastNormalLiteral = "";    // 上一个正确的非blank token
+        JsonToken.Type preNormalType = null;
+        boolean finish = false;
+        int i = 0;
+        for(int len = json.length(); i < len; i++){
             char ch = json.charAt(i);
-            int step = 0; // 记录本次遍历char的步长
-
-            // parse token
-            if (isWhitespace(ch)) {
-                step = 1;
-            } else if (ch == '{') {
-                tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.OBJECT_BEGIN).setTokenType(TokenType.structure).setRowIndex(rowIndex).setColIndex(colIndex).build());
-                step = 1;
-            } else if (ch == '}') {
-                tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.OBJECT_END).setTokenType(TokenType.structure).setRowIndex(rowIndex).setColIndex(colIndex).build());
-                step = 1;
-            } else if (ch == '[') {
-                tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.ARRAY_BEGIN).setTokenType(TokenType.structure).setRowIndex(rowIndex).setColIndex(colIndex).build());
-                step = 1;
-            } else if (ch == ']') {
-                tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.ARRAY_END).setTokenType(TokenType.structure).setRowIndex(rowIndex).setColIndex(colIndex).build());
-                step = 1;
-            } else if (ch == ':') {
-                tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.COLON).setTokenType(TokenType.structure).setRowIndex(rowIndex).setColIndex(colIndex).build());
-                step = 1;
-            } else if (ch == ',') {
-                tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.COMMA).setTokenType(TokenType.structure).setRowIndex(rowIndex).setColIndex(colIndex).build());
-                step = 1;
-            } else if (ch == '"') // string
-            {
-                RefObj<Integer> strLen = new RefObj<>();
-                String str = parseString(json, i, strLen);
-                if (str == null) {
-                    if (i + 1 < len) {
-                        triggerParseException("can't parse as string, token start with : '" + json.charAt(i + 1) + "'", rowIndex, colIndex);
-                    } else {
-                        triggerParseException("can't parse as string, token start with : EOF", rowIndex, colIndex);
+            JsonToken t = null;
+            switch (ch){
+                case '{':
+                    if((!finish && objOrArr.isEmpty()) || waitValue){
+                        t = new JsonToken(i, "{", JsonToken.Type.STRUCTURE);
+                    }else{
+                        t = new JsonToken(i, "{", JsonToken.Type.STRUCTURE, true);
                     }
-                } else {
-                    tokens.add(TokenBuilder.newBuilder().setLiteral(str).setTokenType(TokenType.t_string).setRowIndex(rowIndex).setColIndex(colIndex).build());
-                    step = strLen.value;
-                }
-            } else if (ch == '-' || isDigit(ch)) // number
-            {
-                String num = parseNumber(json, i);
-                if (num == null) {
-                    triggerParseException("can't parse as number, token start with : '" + ch + "'", rowIndex, colIndex);
-                } else {
-                    tokens.add(TokenBuilder.newBuilder().setLiteral(num).setTokenType(TokenType.number).setRowIndex(rowIndex).setColIndex(colIndex).build());
-                    step = num.length();
-                }
-            } else if (ch == 'f') // false
-            {
-                if (match(json, "false", i)) {
-                    tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.T_FALSE).setTokenType(TokenType.t_const).setRowIndex(rowIndex).setColIndex(colIndex).build());
-                    step = 5;
-                } else {
-                    triggerParseException("unknown token start with : 'f'", rowIndex, colIndex);
-                }
-            } else if (ch == 't') // true
-            {
-                if (match(json, JsonWord.T_TRUE, i)) {
-                    tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.T_TRUE).setTokenType(TokenType.t_const).setRowIndex(rowIndex).setColIndex(colIndex).build());
-                    step = 4;
-                } else {
-                    triggerParseException("unknown token start with : 't'", rowIndex, colIndex);
-                }
-            } else if (ch == 'n') // null
-            {
-                if (match(json, JsonWord.T_NULL, i)) {
-                    tokens.add(TokenBuilder.newBuilder().setLiteral(JsonWord.T_NULL).setTokenType(TokenType.t_const).setRowIndex(rowIndex).setColIndex(colIndex).build());
-                    step = 4;
-                } else {
-                    triggerParseException("unknown token start with : 'n'", rowIndex, colIndex);
-                }
-            } else {
-                // error unexpect char
-                triggerParseException("unknown token start with : '" + ch + "'", rowIndex, colIndex);
+                    objOrArr.push(0);
+                    break;
+                case '}':
+                    if(stackPeek(objOrArr) == 0 && !waitValue && preNormalType != JsonToken.Type.KEY && !",".equals(lastNormalLiteral)){
+                        t = new JsonToken(i, "}", JsonToken.Type.STRUCTURE);
+                        objOrArr.pop();
+                    }else{
+                        t = new JsonToken(i, "}", JsonToken.Type.STRUCTURE, true);
+                    }
+                    break;
+                case ':':
+                    if(stackPeek(objOrArr) == 0 && preNormalType == JsonToken.Type.KEY){
+                        t = new JsonToken(i, ":", JsonToken.Type.STRUCTURE);
+                    }else{
+                        t = new JsonToken(i, ":", JsonToken.Type.STRUCTURE, true);
+                    }
+                    break;
+                case '[':
+                    if(waitValue || (!finish && objOrArr.isEmpty())){
+                        t = new JsonToken(i, "[", JsonToken.Type.STRUCTURE);
+                    }else{
+                        t = new JsonToken(i, "[", JsonToken.Type.STRUCTURE, true);
+                    }
+                    objOrArr.push(1);
+                    break;
+                case ']':
+                    if(stackPeek(objOrArr) == 1){
+                        if(!",".equals(lastNormalLiteral)){
+                            t = new JsonToken(i, "]", JsonToken.Type.STRUCTURE);
+                        }
+                        objOrArr.pop();
+                    }
+                    if(t == null){
+                        t = new JsonToken(i, "]", JsonToken.Type.STRUCTURE, true);
+                    }
+                    break;
+                case ',':
+                    if(!waitValue){
+                        t = new JsonToken(i, ",", JsonToken.Type.STRUCTURE);
+                    }else{
+                        t = new JsonToken(i, ",", JsonToken.Type.STRUCTURE, true);
+                    }
+                    break;
+                case 'n':
+                    String subStr = trySubString(json, i, 4);
+                    if("null".equals(subStr)){
+                        if(waitValue){
+                            t = new JsonToken(i, "null", JsonToken.Type.NULL);
+                        }else{
+                            t = new JsonToken(i, "null", JsonToken.Type.NULL, true);
+                        }
+                        i += 3;
+                    }
+                    break;
+                case 't':
+                    subStr = trySubString(json, i, 4);
+                    if("true".equals(subStr)){
+                        if(waitValue){
+                            t = new JsonToken(i, "true", JsonToken.Type.BOOL);
+                        }else{
+                            t = new JsonToken(i, "true", JsonToken.Type.BOOL, true);
+                        }
+                        i += 3;
+                    }
+                    break;
+                case 'f':
+                    subStr = trySubString(json, i, 5);
+                    if("false".equals(subStr)){
+                        if(waitValue){
+                            t = new JsonToken(i, "false", JsonToken.Type.BOOL);
+                        }else{
+                            t = new JsonToken(i, "false", JsonToken.Type.BOOL, true);
+                        }
+                        i += 4;
+                    }
+                    break;
+                case '"':
+                    subStr = matchString(json, i);
+                    if(subStr != null){
+                        if(waitValue){
+                            t = new JsonToken(i, subStr, JsonToken.Type.STR_VALUE);
+                        }else {
+                            if("{".equals(lastNormalLiteral) || ",".equals(lastNormalLiteral)){
+                                t = new JsonToken(i, subStr, JsonToken.Type.KEY);
+                            }else{
+                                t = new JsonToken(i, subStr, JsonToken.Type.KEY, true);
+                            }
+                        }
+                        i += subStr.length() - 1;
+                    }
+                    break;
+                default:
+                    if(isWhitespace(ch)){
+                        String s = matchWhitespace(json, i);
+                        t = new JsonToken(i, s, JsonToken.Type.BLANK);
+                        i += s.length() - 1;
+                    }else{
+                        String number = matchNumber(json, i);
+                        if(number != null){
+                            if(waitValue){
+                                t = new JsonToken(i, number, JsonToken.Type.NUMBER);
+                            }else{
+                                t = new JsonToken(i, number, JsonToken.Type.NUMBER, true);
+                            }
+                            i += number.length() - 1;
+                        }
+                    }
+                    break;
             }
-
-            i += step;
-            colIndex += step;
-
-            if (isLineFeed(ch)) // 如果是换行, 刷新位置信息
-            {
-                rowIndex++;
-                colIndex = 0;
+            if(ch == '[' || (ch == ':' && stackPeek(objOrArr) == 0) || (ch == ','&& stackPeek(objOrArr) == 1)){
+                waitValue = true;
+            }else if(!isWhitespace(ch) && t != null){
+                waitValue = false;
+            }
+            if(t == null){
+                illegalStr.append(ch);
+            }else {
+                if(illegalStr.length() > 0){
+                    tokens.add(new JsonToken(i - illegalStr.length(), illegalStr.toString(), JsonToken.Type.UNKNOWN));
+                    illegalStr = new StringBuilder();
+                    if(abortWhenIncorrect){ break; }
+                }
+                if(!t.isError() && t.getType() != JsonToken.Type.BLANK){
+                    lastNormalLiteral = t.getLiteral();
+                    preNormalType = t.getType();
+                    if(objOrArr.isEmpty()){
+                        finish = true;
+                    }
+                }
+                tokens.add(t);
+                if(t.isError() && abortWhenIncorrect){
+                    break;
+                }
             }
         }
-
+        if(illegalStr.length() > 0){
+            tokens.add(new JsonToken(i - illegalStr.length(), illegalStr.toString(), JsonToken.Type.UNKNOWN));
+        }
+        if(!objOrArr.isEmpty()){
+            JsonToken last = tokens.removeLast();
+            tokens.add(new JsonToken(last.getStart(), last.getLiteral(), last.getType(), true));
+        }
         return tokens;
     }
 
-    private static void triggerParseException(String msg, int rowIndex, int colIndex) throws JsonParseException {
-        throw new JsonParseException(msg + ", row : " + (rowIndex + 1) + ", col : " + (colIndex + 1));
-    }
-
-    private static String parseString(String json, int start, RefObj<Integer> strLen) {
-        StringBuilder result = new StringBuilder();
-        strLen.value = 0;
-
-        int i = start;
-        int len = json.length();
-        if (i >= len) {
-            return null;
-        }
-
-        char ch = json.charAt(i);
-        if (ch != '"') {
-            return null;
-        }
-        i++;
-        while (i < len) {
-            ch = json.charAt(i);
-            if (ch == '"') {
-                break;
-            } else if (ch == '\\') {
-                i++;
-                if (i >= len) {
-                    return null;
-                }
-                ch = json.charAt(i);
-                if (JsonUtil.isEscape(ch)) {
-                    result.append('\\').append(ch);
-                    i++;
-                } else if (ch == 'u')  // 4 hex digits
-                {
-                    i++;
-                    if (i + 4 > len) {
-                        return null;
-                    }
-                    result.append("\\u");
-                    for (int j = 0; j < 4; j++) {
-                        ch = json.charAt(i + j);
-                        if (JsonUtil.isHex(ch)) {
-                            result.append(ch);
-                        } else {
-                            return null;
-                        }
-                    }
-                    i += 4;
-                } else {
-                    return null;
-                }
-            } else {
-                result.append(ch);
-                i++;
-            }
-        }
-
-        if (ch != '"') {
-            return null;
-        }
-
-        strLen.value = i + 1 - start;
-
-        return result.toString();
-    }
-
-    private static String parseNumber(String json, int start) {
-        StringBuilder result = new StringBuilder();
-        int index = start;
-        int len = json.length();
-
-        if (index >= len) {
-            return null;
-        }
-        char ch = json.charAt(index);
-
-        // sign
-        if (ch == '-') {
-            result.append('-');
-            index++;
-        }
-
-        // integer part
-        if (index >= len) {
-            return null;
-        }
-        ch = json.charAt(index);
-
-        if (!isDigit(ch)) {
-            return null;
-        } else if (ch == '0') {
-            result.append('0');
-            index++;
-            ch = json.charAt(index);
-            if(ch != '.' && ch != 'e' && ch != 'E'){
-                if(!isDigit(ch)){
-                    return result.toString();
-                }else {
-                    return null;
-                }
-            }
-        } else {
-            result.append(ch);
-            index++;
-            for (; index < len; index++) {
-                ch = json.charAt(index);
-                if (isDigit(ch)) {
-                    result.append(ch);
-                } else if (ch == '.' || ch == 'e' || ch == 'E') {
-                    break;
-                } else {
-                    return result.toString();
-                }
-            }
-        }
-
-        // fraction part
-        if (ch == '.') {
-            result.append('.');
-            index++;
-            if (index >= len) {
-                return null;
-            }
-            for (; index < len; index++) {
-                ch = json.charAt(index);
-                if (isDigit(ch)) {
-                    result.append(ch);
-                } else if (ch == 'e' || ch == 'E') {
-                    break;
-                } else {
-                    return result.toString();
-                }
-            }
-        }
-
-        // scientific notation
-        if (ch == 'e' || ch == 'E') {
-            result.append(ch);
-            index++;
-            if (index >= len) {
-                return null;
-            }
-            ch = json.charAt(index);
-            if (ch == '-' || ch == '+') {
-                result.append(ch);
-                index++;
-            }
-            if (index >= len) {
-                return null;
-            }
-            for (; index < len; index++) {
-                ch = json.charAt(index);
-                if (isDigit(ch)) {
-                    result.append(ch);
-                } else {
-                    return result.toString();
-                }
-            }
-        }
-
-        return null;
-    }
-
-    private static boolean isDigit(char ch) {
-        return ch >= '0' && ch <= '9';
-    }
-
-    private static boolean match(String json, String match, int start) {
-        if (json.length() < match.length() + start) {
-            return false;
-        }
-        for (int i = 0, len = match.length(); i < len; i++) {
-            if (json.charAt(i + start) != match.charAt(i)) {
-                return false;
-            }
-        }
-        return true;
+    private static int stackPeek(Stack<Integer> stack){
+        return stack.isEmpty() ? -1 : stack.peek();
     }
 
     private static boolean isWhitespace(char ch) {
         return ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n';
     }
 
-    private static boolean isLineFeed(char ch) {
-        return ch == '\n';
+    private static String matchWhitespace(String str, int start){
+        StringBuilder sb = new StringBuilder();
+        for(int i = start, len = str.length(); i < len; i++){
+            char ch = str.charAt(i);
+            if(!isWhitespace(ch)){
+                break;
+            }
+            sb.append(ch);
+        }
+        return sb.toString();
     }
 
-    private static class TokenBuilder {
+    private static String matchString(String str, int start){
+        StringBuilder result = new StringBuilder();
+        int i = start;
+        int len = str.length();
+        char ch = str.charAt(i);
+        if (ch != '"') { return result.toString(); }
+        i++;
+        result.append('"');
+        while (i < len) {
+            ch = str.charAt(i);
+            if (ch == '"') {
+                result.append('"');
+                break;
+            } else if (ch == '\\') {
+                i++;
+                if (i >= len) {
+                    return result.toString();
+                }
+                ch = str.charAt(i);
+                if (isEscape(ch)) {
+                    result.append('\\').append(ch);
+                    i++;
+                } else if (ch == 'u')  // 4 hex digits
+                {
+                    i++;
+                    if (i + 4 > len) {
+                        return result.toString();
+                    }
+                    result.append("\\u");
+                    for (int j = 0; j < 4; j++) {
+                        ch = str.charAt(i + j);
+                        if (isHex(ch)) {
+                            result.append(ch);
+                        } else {
+                            return result.toString();
+                        }
+                    }
+                    i += 4;
+                } else {
+                    return result.toString();
+                }
+            } else if(ch == '\n'){
+                return null;
+            }else{
+                result.append(ch);
+                i++;
+            }
+        }
+        return result.toString();
+    }
 
-        private String literal;
+    private static boolean isNotDigit(char ch) {
+        return ch < '0' || ch > '9';
+    }
 
-        private TokenType type;
-
-        private int rowIndex = -1;
-
-        private int colIndex = -1;
-
-        public static TokenBuilder newBuilder() {
-            return new TokenBuilder();
+    private static String matchNumber(String str, int start){
+        StringBuilder number = new StringBuilder();
+        int i = start;
+        char ch = str.charAt(i);
+        if(ch == '-'){
+            number.append(ch);
+            i++;
         }
 
-        public TokenBuilder setLiteral(String literal) {
-            this.literal = literal;
-            return this;
+        ch = str.charAt(i);
+        if(isNotDigit(ch)){
+            return null;
         }
 
-        public TokenBuilder setTokenType(TokenType type) {
-            this.type = type;
-            return this;
+        number.append(ch);
+        i++;
+
+        int len = str.length();
+        if(ch != '0'){
+            for(; i < len; i++){
+                ch = str.charAt(i);
+                if(isNotDigit(ch)){ break; }
+                number.append(ch);
+            }
         }
 
-        public TokenBuilder setRowIndex(int rowIndex) {
-            this.rowIndex = rowIndex;
-            return this;
+        if(ch == '.'){
+            i++;
+            ch = str.charAt(i);
+            if(isNotDigit(ch)){
+                return number.toString();
+            }
+            number.append('.');
+            for(; i < len; i++){
+                ch = str.charAt(i);
+                if(isNotDigit(ch)){ break; }
+                number.append(ch);
+            }
         }
 
-        public TokenBuilder setColIndex(int colIndex) {
-            this.colIndex = colIndex;
-            return this;
+        if(ch == 'e' || ch == 'E'){
+            i++;
+            char p = str.charAt(i);
+            if(isNotDigit(p)){
+                if(p == '+' || p == '-'){
+                    i++;
+                    char p2 = str.charAt(i);
+                    if(isNotDigit(p2)){
+                        return number.toString();
+                    }else{
+                        number.append(ch).append(p);
+                    }
+                }else{
+                    return number.toString();
+                }
+            }else{
+                number.append(ch);
+            }
+
+            for(; i < len; i++){
+                ch = str.charAt(i);
+                if(isNotDigit(ch)){ break; }
+                number.append(ch);
+            }
         }
 
-        public Token build() {
-            return new Token(this.literal, this.type, this.rowIndex, this.colIndex);
+        return number.toString();
+    }
+
+    private static String trySubString(String str, int start, int len){
+        if(str.length() >= start + len){
+            return str.substring(start, start + len);
+        }else{
+            return str.substring(start);
         }
     }
 
-}
-
-enum TokenType {
-    /// <summary>
-    /// 结构token, 只有以下这些: { } [ ] : ,
-    /// </summary>
-    structure,
-    /// <summary>
-    /// 字符串类型, 可以作为json的key和value
-    /// </summary>
-    t_string,
-    /// <summary>
-    /// 数字类型, 只能作为json的value
-    /// </summary>
-    number,
-    /// <summary>
-    /// 常量类型, 有以下几种: true, false, null
-    /// </summary>
-    t_const
-}
-
-final class Token {
-    public final String literal;
-
-    public final TokenType type;
-
-    public final int colIndex;
-
-    public final int rowIndex;
-
-    public Token(String literal, TokenType type, int rowIndex, int colIndex) {
-        if (literal == null) {
-            throw new IllegalArgumentException("literal is null.");
-        }
-        if (rowIndex < 0 || colIndex < 0) {
-            throw new IllegalArgumentException("row or col must be positive.");
-        }
-        if(type == null){
-            throw new IllegalArgumentException("token type can't null.");
-        }
-        this.literal = literal;
-        this.type = type;
-        this.rowIndex = rowIndex;
-        this.colIndex = colIndex;
+    private static boolean isEscape(char ch) {
+        return ch == '"' || ch == '\\' || ch == '/' || ch == 'b' || ch == 'f' || ch == 'r' || ch == 'n' || ch == 't';
     }
 
-    @Override
-    public String toString() {
-        return this.literal;
+    private static boolean isHex(char ch) {
+        return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f');
     }
 }

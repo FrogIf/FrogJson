@@ -16,30 +16,33 @@ class JsonSyntacticAnalysis {
         ROOT_NODE = buildStatusMap();
     }
 
-    public static JsonElement syntacticAnalysis(List<Token> tokens) throws JsonParseException {
+    public static JsonElement syntacticAnalysis(List<JsonToken> tokens, String json) throws JsonParseException {
         if (tokens == null || tokens.size() < 2) {
             throw new JsonParseException("json lack necessary structure.");
         }
         Stack<BuildStatusNode> pendingStack = new Stack<>();
         JsonBuilder jsonBuilder = new JsonBuilder();
         BuildStatusNode cursor = ROOT_NODE;
-        for (Token token : tokens) {
+        for (JsonToken token : tokens) {
+            if(token.getType() == JsonToken.Type.BLANK){ continue; }
             BuildStatusNode pre = cursor;
             cursor = cursor.move(token);
             if (cursor == null && pre.isTerminal() && !pendingStack.isEmpty()) {
                 cursor = pendingStack.pop().move(token);
             }
             if (cursor == null) {
-                triggerException(token);
+                JsonParseUtil.triggerException(token, json);
             }
+            assert cursor != null;
             cursor.tokenHandler.handle(token, jsonBuilder);
 
             if (cursor.isNest()) {    // 如果是嵌套节点
                 pendingStack.push(cursor);
                 cursor = cursor.moveInNest(token);
                 if (cursor == null) {
-                    triggerException(token);
+                    JsonParseUtil.triggerException(token, json);
                 }
+                assert cursor != null;
                 cursor.tokenHandler.handle(token, jsonBuilder);
             }
         }
@@ -49,19 +52,15 @@ class JsonSyntacticAnalysis {
         return jsonBuilder.root.build();
     }
 
-    private static void triggerException(Token token) throws JsonParseException {
-        throw new JsonParseException("json format is not right, row : " + (token.rowIndex + 1) + ", col : " + (token.colIndex + 1) + ", literal : " + token.literal);
-    }
-
     private static BuildStatusNode buildStatusMap() {
         // --- object ---
-        BuildStatusNode objectBegin = new BuildStatusNode(JsonWord.OBJECT_BEGIN, TokenType.structure,
+        BuildStatusNode objectBegin = new BuildStatusNode(JsonWord.OBJECT_BEGIN, JsonToken.Type.STRUCTURE,
                 (token, builder) -> builder.newJsonObject());
-        BuildStatusNode objectKey = new BuildStatusNode(BuildStatusNode.WILDCARD, TokenType.t_string,
-                (token, builder) -> builder.newObjectKey(token.literal));
-        BuildStatusNode objectColon = new BuildStatusNode(JsonWord.COLON, TokenType.structure, (token, builder) -> { /* do nothing */ });
-        BuildStatusNode objectComma = new BuildStatusNode(JsonWord.COMMA, TokenType.structure, (token, builder) -> {/* do nothing */});
-        BuildStatusNode objectEnd = new BuildStatusNode(JsonWord.OBJECT_END, TokenType.structure,
+        BuildStatusNode objectKey = new BuildStatusNode(BuildStatusNode.WILDCARD, JsonToken.Type.KEY,
+                (token, builder) -> builder.newObjectKey(trimQuote(token.getLiteral())));
+        BuildStatusNode objectColon = new BuildStatusNode(JsonWord.COLON, JsonToken.Type.STRUCTURE, (token, builder) -> { /* do nothing */ });
+        BuildStatusNode objectComma = new BuildStatusNode(JsonWord.COMMA, JsonToken.Type.STRUCTURE, (token, builder) -> {/* do nothing */});
+        BuildStatusNode objectEnd = new BuildStatusNode(JsonWord.OBJECT_END, JsonToken.Type.STRUCTURE,
                 (token, builder) -> builder.closeElement());
         BuildStatusNode objectNest = new BuildStatusNode(null, null, (token, builder) -> { /* do nothing */ }, true);
 
@@ -78,11 +77,11 @@ class JsonSyntacticAnalysis {
         objectComma.to(objectKey);
 
         // --- array ---
-        BuildStatusNode arrayBegin = new BuildStatusNode(JsonWord.ARRAY_BEGIN, TokenType.structure,
+        BuildStatusNode arrayBegin = new BuildStatusNode(JsonWord.ARRAY_BEGIN, JsonToken.Type.STRUCTURE,
                 (token, builder) -> builder.newJsonArray());
-        BuildStatusNode arrayEnd = new BuildStatusNode(JsonWord.ARRAY_END, TokenType.structure,
+        BuildStatusNode arrayEnd = new BuildStatusNode(JsonWord.ARRAY_END, JsonToken.Type.STRUCTURE,
                 (token, builder) -> builder.closeElement());
-        BuildStatusNode arrayComma = new BuildStatusNode(JsonWord.COMMA, TokenType.structure, (token, builder) -> {/* do nothing */ });
+        BuildStatusNode arrayComma = new BuildStatusNode(JsonWord.COMMA, JsonToken.Type.STRUCTURE, (token, builder) -> {/* do nothing */ });
         BuildStatusNode arrayNest = new BuildStatusNode(null, null, (token, builder) -> { /* do nothing */ }, true);
 
         arrayBegin.to(arrayEnd);
@@ -92,22 +91,26 @@ class JsonSyntacticAnalysis {
         arrayComma.to(arrayNest);
 
         // --- value ---
-        BuildStatusNode stringValue = new BuildStatusNode(BuildStatusNode.WILDCARD, TokenType.t_string,
-                (token, builder) -> builder.addArrayValue(new StringJsonValue(token.literal)));
-        BuildStatusNode constValue = new BuildStatusNode(BuildStatusNode.WILDCARD, TokenType.t_const,
-                (token, builder) -> builder.addArrayValue(new ConstJsonValue(token.literal)));
-        BuildStatusNode numberValue = new BuildStatusNode(BuildStatusNode.WILDCARD, TokenType.number,
-                (token, builder) -> builder.addArrayValue(new NumberJsonValue(token.literal)));
+        BuildStatusNode stringValue = new BuildStatusNode(BuildStatusNode.WILDCARD, JsonToken.Type.STR_VALUE,
+                (token, builder) -> builder.addArrayValue(new StringJsonValue(trimQuote(token.getLiteral()))));
+        BuildStatusNode constValue = new BuildStatusNode(BuildStatusNode.WILDCARD, JsonToken.Type.BOOL,
+                (token, builder) -> builder.addArrayValue(new ConstJsonValue(token.getLiteral())));
+        BuildStatusNode nullValue = new BuildStatusNode(BuildStatusNode.WILDCARD, JsonToken.Type.NULL,
+                (token, builder) -> builder.addArrayValue(new ConstJsonValue(token.getLiteral())));
+        BuildStatusNode numberValue = new BuildStatusNode(BuildStatusNode.WILDCARD, JsonToken.Type.NUMBER,
+                (token, builder) -> builder.addArrayValue(new NumberJsonValue(token.getLiteral())));
         arrayNest.nestInclude(arrayBegin);
         arrayNest.nestInclude(objectBegin);
         arrayNest.nestInclude(stringValue);
         arrayNest.nestInclude(constValue);
+        arrayNest.nestInclude(nullValue);
         arrayNest.nestInclude(numberValue);
 
         objectNest.nestInclude(arrayBegin);
         objectNest.nestInclude(objectBegin);
         objectNest.nestInclude(stringValue);
         objectNest.nestInclude(constValue);
+        objectNest.nestInclude(nullValue);
         objectNest.nestInclude(numberValue);
 
         BuildStatusNode rootNode = new BuildStatusNode(null, null, (token, builder) -> {/* do nothing */ });
@@ -249,20 +252,20 @@ class JsonSyntacticAnalysis {
     }
 
     private interface ITokenHandler {
-        void handle(Token token, JsonBuilder builder);
+        void handle(JsonToken token, JsonBuilder builder);
     }
 
     private static class BuildStatusNode {
 
         public static final String WILDCARD = "*";
 
-        private final TokenType tokenType;
+        private final JsonToken.Type tokenType;
 
         private final String literal;
 
-        private final HashMap<TokenType, HashMap<String, BuildStatusNode>> moveMap = new HashMap<>();
+        private final HashMap<JsonToken.Type, HashMap<String, BuildStatusNode>> moveMap = new HashMap<>();
 
-        private final HashMap<TokenType, HashMap<String, BuildStatusNode>> moveNestMap = new HashMap<>(0);
+        private final HashMap<JsonToken.Type, HashMap<String, BuildStatusNode>> moveNestMap = new HashMap<>(0);
 
         private BuildStatusNode defaultNode = null;
 
@@ -271,14 +274,14 @@ class JsonSyntacticAnalysis {
         // 该节点是否为嵌套节点
         private final boolean nest;
 
-        public BuildStatusNode(String literal, TokenType tokenType, ITokenHandler tokenHandler) {
+        public BuildStatusNode(String literal, JsonToken.Type tokenType, ITokenHandler tokenHandler) {
             this.tokenHandler = tokenHandler;
             this.tokenType = tokenType;
             this.literal = literal;
             this.nest = false;
         }
 
-        public BuildStatusNode(String literal, TokenType tokenType, ITokenHandler tokenHandler, boolean nest) {
+        public BuildStatusNode(String literal, JsonToken.Type tokenType, ITokenHandler tokenHandler, boolean nest) {
             this.tokenHandler = tokenHandler;
             this.tokenType = tokenType;
             this.literal = literal;
@@ -289,7 +292,7 @@ class JsonSyntacticAnalysis {
          * 移动至下一个状态节点
          * 如果返回null, 说明移动失败
          */
-        BuildStatusNode move(Token token) {
+        BuildStatusNode move(JsonToken token) {
             BuildStatusNode next = moveByMap(token, this.moveMap);
             if (next == null) {
                 next = defaultNode;
@@ -308,11 +311,11 @@ class JsonSyntacticAnalysis {
             }
         }
 
-        private BuildStatusNode moveByMap(Token token, HashMap<TokenType, HashMap<String, BuildStatusNode>> map) {
-            HashMap<String, BuildStatusNode> literalToNode = map.get(token.type);
+        private BuildStatusNode moveByMap(JsonToken token, HashMap<JsonToken.Type, HashMap<String, BuildStatusNode>> map) {
+            HashMap<String, BuildStatusNode> literalToNode = map.get(token.getType());
             BuildStatusNode next = null;
             if (literalToNode != null) {
-                next = literalToNode.get(token.literal);
+                next = literalToNode.get(token.getLiteral());
                 if (next == null && literalToNode.containsKey(WILDCARD)) {
                     next = literalToNode.get(WILDCARD);
                 }
@@ -320,7 +323,7 @@ class JsonSyntacticAnalysis {
             return next;
         }
 
-        private void addToMap(BuildStatusNode node, HashMap<TokenType, HashMap<String, BuildStatusNode>> map) {
+        private void addToMap(BuildStatusNode node, HashMap<JsonToken.Type, HashMap<String, BuildStatusNode>> map) {
             HashMap<String, BuildStatusNode> literalToNode = map.computeIfAbsent(node.tokenType, k -> new HashMap<>());
             if (literalToNode.containsKey(node.literal)) {
                 throw new IllegalArgumentException("assign map has exists, type : " + node.tokenType + ", literal : " + node.literal);
@@ -336,7 +339,7 @@ class JsonSyntacticAnalysis {
             addToMap(node, this.moveNestMap);
         }
 
-        BuildStatusNode moveInNest(Token token) {
+        BuildStatusNode moveInNest(JsonToken token) {
             return moveByMap(token, this.moveNestMap);
         }
 
@@ -344,6 +347,10 @@ class JsonSyntacticAnalysis {
             return this.defaultNode == null && this.moveMap.isEmpty() && this.moveNestMap.isEmpty();
         }
 
+    }
+
+    private static String trimQuote(String str){
+        return str.substring(1, str.length() - 1);
     }
 
 
