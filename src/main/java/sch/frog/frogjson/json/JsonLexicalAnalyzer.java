@@ -253,8 +253,9 @@ public class JsonLexicalAnalyzer {
     private static String matchNumber(String str, int start){
         StringBuilder number = new StringBuilder();
         int i = start;
+        int len = str.length();
         char ch = str.charAt(i);
-        if(ch == '-'){
+        if(ch == '-' && i + 1 < len){  // 匹配正负号
             number.append(ch);
             i++;
         }
@@ -266,19 +267,19 @@ public class JsonLexicalAnalyzer {
 
         number.append(ch);
         i++;
-
-        int len = str.length();
-        if(ch != '0'){
+        if(ch != '0'){  // 匹配整数部分
             for(; i < len; i++){
                 ch = str.charAt(i);
                 if(isNotDigit(ch)){ break; }
                 number.append(ch);
             }
+        }else if(i < len){
+            ch = str.charAt(i);
         }
 
-        if(ch == '.'){
+        if(ch == '.' && i + 1 < len){
             i++;
-            ch = str.charAt(i);
+            ch = str.charAt(i); // 向后预看一位
             if(isNotDigit(ch)){
                 return number.toString();
             }
@@ -290,17 +291,17 @@ public class JsonLexicalAnalyzer {
             }
         }
 
-        if(ch == 'e' || ch == 'E'){
+        if((ch == 'e' || ch == 'E') && i + 1 < len){
             i++;
             char p = str.charAt(i);
             if(isNotDigit(p)){
-                if(p == '+' || p == '-'){
+                if(i + 1 < len && (p == '+' || p == '-')){
                     i++;
                     char p2 = str.charAt(i);
-                    if(isNotDigit(p2)){
-                        return number.toString();
-                    }else{
+                    if(!isNotDigit(p2)){
                         number.append(ch).append(p);
+                    }else{
+                        return number.toString();
                     }
                 }else{
                     return number.toString();
