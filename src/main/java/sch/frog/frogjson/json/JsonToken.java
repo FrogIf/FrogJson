@@ -4,18 +4,21 @@ public class JsonToken {
 
     private final int start;
 
+    private final int line;
+
     private final String literal;
 
     private final Type type;
 
     private final boolean error;
 
-    public JsonToken(int start, String literal, Type type) {
-        this(start, literal, type, false);
+    public JsonToken(int start, int line, String literal, Type type) {
+        this(start, line, literal, type, false);
     }
 
-    public JsonToken(int start, String literal, Type type, boolean error) {
+    public JsonToken(int start, int line, String literal, Type type, boolean error) {
         this.start = start;
+        this.line = line;
         this.literal = literal;
         this.type = type;
         this.error = error;
@@ -35,6 +38,10 @@ public class JsonToken {
 
     public boolean isError() {
         return error;
+    }
+
+    public int getLine() {
+        return line;
     }
 
     public enum Type{

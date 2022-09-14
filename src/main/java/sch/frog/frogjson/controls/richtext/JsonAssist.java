@@ -1,4 +1,4 @@
-package sch.frog.frogjson.controls;
+package sch.frog.frogjson.controls.richtext;
 
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -27,6 +27,8 @@ public class JsonAssist {
     private final CodeHighLight codeHighLight = new CodeHighLight();
 
     private final BracketHighLight bracketHighLight = new BracketHighLight();
+
+    private final BracketCollapsibleExecutor collapsibleChecker = new BracketCollapsibleExecutor();
 
     private static JsonAssist instance = null;
 
@@ -89,7 +91,8 @@ public class JsonAssist {
 
         private void applyHighlighting(StyleSpans<Collection<String>> highlighting, CustomCodeArea codeArea) {
             codeArea.setStyleSpans(0, highlighting);
-            bracketHighLight.beginHighLight(codeArea);
+            bracketHighLight.highlightBracket(codeArea);
+            collapsibleChecker.enableExecute(codeArea);
         }
 
         private StyleSpans<Collection<String>> computeHighlighting(CustomCodeArea codeArea) {
@@ -197,30 +200,41 @@ public class JsonAssist {
                     HashSet<String> newStyles = new HashSet<>();
                     if(styleSpans != null && styleSpans.length() > 0){
                         for (StyleSpan<Collection<String>> styleSpan : styleSpans) {
-                            newStyles.addAll(styleSpan.getStyle());
+                            Collection<String> spanStyle = styleSpan.getStyle();
+                            newStyles.addAll(spanStyle);
                         }
                     }
-                    newStyles.add(style);
-                    codeArea.setStyle(pos, pos + 1, newStyles);
+                    if(newStyles.add(style)){
+                        codeArea.setStyle(pos, pos + 1, newStyles);
+                    }
                 }
             }
         }
 
-        private void highlightBracket(CustomCodeArea codeArea, int newVal) {
+        private void highlightBracket(CustomCodeArea codeArea) {
+            int caretPosition = codeArea.getCaretPosition();
             AssistObject assistObject = getAssistObject(codeArea);
-            if(assistObject.bracketHighlight){
-                this.clearBracket(codeArea);
+            this.clearBracket(codeArea);
 
-                String prevChar = (newVal > 0 && newVal <= codeArea.getLength()) ? codeArea.getText(newVal - 1, newVal) : "";
-                if (BRACKET_PAIRS.contains(prevChar)) newVal--;
-
-                int other = getMatchingBracket(codeArea, newVal);
-
-                if (other < 0) { return; }
-                Pair pair = new Pair(newVal, other);
-                match(codeArea, pair);
-                assistObject.matchPairs.add(pair);
+            String c1 = "x", c2 = "x";
+            if(caretPosition > 0){
+                c1 = codeArea.getText(caretPosition - 1, caretPosition);
             }
+            if(caretPosition + 1 <= codeArea.getLength()){
+                c2 = codeArea.getText(caretPosition, caretPosition + 1);
+            }
+            if (BRACKET_PAIRS.contains(c1)){
+                caretPosition--;
+            }else if(!BRACKET_PAIRS.contains(c2)){
+                return;
+            }
+
+            int other = getMatchingBracket(codeArea, caretPosition);
+
+            if (other < 0) { return; }
+            Pair pair = new Pair(caretPosition, other);
+            match(codeArea, pair);
+            assistObject.matchPairs.add(pair);
         }
 
         private int getMatchingBracket(CustomCodeArea codeArea, int index) {
@@ -228,11 +242,13 @@ public class JsonAssist {
 
             AssistObject assistObject = getAssistObject(codeArea);
             List<JsonLexicalAnalyzer.BracketPair> bracketPairs = assistObject.getBracketPairs();
-            for (JsonLexicalAnalyzer.BracketPair bracketPair : bracketPairs) {
-                if(bracketPair.getStart().getStart() == index){
-                    return bracketPair.getEnd().getStart();
-                }else if(bracketPair.getEnd().getStart() == index){
-                    return bracketPair.getStart().getStart();
+            if(bracketPairs != null){
+                for (JsonLexicalAnalyzer.BracketPair bracketPair : bracketPairs) {
+                    if(bracketPair.getStart().getStart() == index){
+                        return bracketPair.getEnd().getStart();
+                    }else if(bracketPair.getEnd().getStart() == index){
+                        return bracketPair.getStart().getStart();
+                    }
                 }
             }
             return -1;
@@ -249,14 +265,9 @@ public class JsonAssist {
         }
 
         public void enable(CustomCodeArea codeArea) {
-            codeArea.caretPositionProperty().addListener((obs, oldVal, newVal) -> Platform.runLater(() -> highlightBracket(codeArea, newVal)));
+            codeArea.caretPositionProperty().addListener((obs, oldVal, newVal) -> Platform.runLater(() -> highlightBracket(codeArea)));
         }
 
-        public void beginHighLight(CustomCodeArea codeArea) {
-            AssistObject assistObject = getAssistObject(codeArea);
-            assistObject.bracketHighlight = true;
-            highlightBracket(codeArea, codeArea.getCaretPosition());
-        }
     }
 
     public AssistObject getAssistObject(CustomCodeArea codeArea){
@@ -286,10 +297,10 @@ public class JsonAssist {
             this.codeArea = codeArea;
         }
 
-        private boolean bracketHighlight = false;
+        private volatile boolean collapseEnable = false;
 
-        private ArrayList<Pair> matchPairs = new ArrayList<>();
-        private List<JsonToken> tokens;
+        private final ArrayList<Pair> matchPairs = new ArrayList<>();
+        private volatile List<JsonToken> tokens;
         private List<JsonLexicalAnalyzer.BracketPair> bracketPairs;
 
         public List<JsonToken> getTokens(){
@@ -308,5 +319,53 @@ public class JsonAssist {
             }
             return bracketPairs;
         }
+    }
+
+    /**
+     * 是否可折叠检查
+     */
+    public class BracketCollapsibleExecutor implements CustomLineNumberFactory.CollapsibleExecutor {
+
+        @Override
+        public boolean check(int lineIndex, CodeArea codeArea) {
+            AssistObject assistObject = JsonAssist.this.getAssistObject((CustomCodeArea) codeArea);
+            if(!assistObject.collapseEnable){ return false; }
+            List<JsonLexicalAnalyzer.BracketPair> bracketPairs = assistObject.getBracketPairs();
+            if(bracketPairs != null){
+                for (JsonLexicalAnalyzer.BracketPair bracketPair : bracketPairs) {
+                    JsonToken start = bracketPair.getStart();
+                    JsonToken end = bracketPair.getEnd();
+                    if(start != null && end != null && start.getLine() == lineIndex){
+                        return end.getLine() - start.getLine() > 1;
+                    }
+                }
+            }
+            return false;
+        }
+
+        @Override
+        public void fold(int lineIndex, CodeArea codeArea) {
+            AssistObject assistObject = JsonAssist.this.getAssistObject((CustomCodeArea) codeArea);
+            if(!assistObject.collapseEnable){ return; }
+            List<JsonLexicalAnalyzer.BracketPair> bracketPairs = assistObject.getBracketPairs();
+            if(bracketPairs != null){
+                for (JsonLexicalAnalyzer.BracketPair bracketPair : bracketPairs) {
+                    JsonToken start = bracketPair.getStart();
+                    JsonToken end = bracketPair.getEnd();
+                    if(start != null && end != null && start.getLine() == lineIndex && end.getLine() - start.getLine() > 1){
+                        ((CustomCodeArea)codeArea).foldParagraphs(start.getLine(), end.getLine() - 1);
+                    }
+                }
+            }
+        }
+
+        public void enableExecute(CustomCodeArea codeArea) {
+            AssistObject assistObject = JsonAssist.this.getAssistObject(codeArea);
+            assistObject.collapseEnable = true;
+        }
+    }
+
+    public BracketCollapsibleExecutor getCollapsibleChecker() {
+        return collapsibleChecker;
     }
 }

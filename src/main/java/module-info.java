@@ -10,4 +10,6 @@ module sch.frog.frogjson {
     exports sch.frog.frogjson;
     exports sch.frog.frogjson.controls;
     opens sch.frog.frogjson.controls to javafx.fxml;
+    exports sch.frog.frogjson.controls.richtext;
+    opens sch.frog.frogjson.controls.richtext to javafx.fxml;
 }

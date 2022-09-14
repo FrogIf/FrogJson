@@ -9,9 +9,11 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.BorderPane;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
-import org.fxmisc.richtext.LineNumberFactory;
 import sch.frog.frogjson.ClipboardUtil;
 import sch.frog.frogjson.MessageEmitter;
+import sch.frog.frogjson.controls.richtext.CustomCodeArea;
+import sch.frog.frogjson.controls.richtext.CustomLineNumberFactory;
+import sch.frog.frogjson.controls.richtext.JsonAssist;
 
 import java.util.ArrayList;
 import java.util.regex.Matcher;
@@ -46,7 +48,6 @@ public class JsonTextBox extends BorderPane {
     }
 
     private void initCodeArea(){
-        codeArea.setParagraphGraphicFactory(LineNumberFactory.get(codeArea));
         codeArea.prefHeightProperty().bind(this.heightProperty());
         codeArea.prefWidthProperty().bind(this.widthProperty());
         codeArea.textProperty().addListener((observableValue, s, t1) -> searchAction.reset());
@@ -62,8 +63,9 @@ public class JsonTextBox extends BorderPane {
                 if(m0.find()){ Platform.runLater(() -> codeArea.insertText(caretPosition, m0.group())); }
             }
         });
-        JsonAssist highlight = JsonAssist.getInstance();
-        highlight.enableAssist(codeArea);
+        JsonAssist assist = JsonAssist.getInstance();
+        assist.enableAssist(codeArea);
+        codeArea.setParagraphGraphicFactory(CustomLineNumberFactory.get(codeArea, assist.getCollapsibleChecker()));
     }
 
     private ContextMenu initContextMenu(){
@@ -91,10 +93,7 @@ public class JsonTextBox extends BorderPane {
             codeArea.redo();
         });
         ObservableList<MenuItem> items = contextMenu.getItems();
-        items.add(copy);
-        items.add(find);
-        items.add(undo);
-        items.add(redo);
+        items.addAll(copy, find, undo, redo);
         return contextMenu;
     }
 

@@ -10,4 +10,7 @@ public class StringUtils {
         return str == null || str.isBlank();
     }
 
+    public static boolean isEmpty(String str) {
+        return str == null || str.isEmpty();
+    }
 }

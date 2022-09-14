@@ -20,66 +20,67 @@ public class JsonLexicalAnalyzer {
         JsonToken.Type preNormalType = null;
         boolean finish = false;
         int i = 0;
-        for(int len = json.length(); i < len; i++){
+        int rowIndex = 0;   // 行索引
+        for(final int len = json.length(); i < len; i++){
             char ch = json.charAt(i);
             JsonToken t = null;
             switch (ch){
                 case '{':
                     if((!finish && objOrArr.isEmpty()) || waitValue){
-                        t = new JsonToken(i, "{", JsonToken.Type.STRUCTURE);
+                        t = new JsonToken(i, rowIndex, "{", JsonToken.Type.STRUCTURE);
                     }else{
-                        t = new JsonToken(i, "{", JsonToken.Type.STRUCTURE, true);
+                        t = new JsonToken(i, rowIndex, "{", JsonToken.Type.STRUCTURE, true);
                     }
                     objOrArr.push(0);
                     break;
                 case '}':
                     if(stackPeek(objOrArr) == 0 && !waitValue && preNormalType != JsonToken.Type.KEY && !",".equals(lastNormalLiteral)){
-                        t = new JsonToken(i, "}", JsonToken.Type.STRUCTURE);
+                        t = new JsonToken(i, rowIndex, "}", JsonToken.Type.STRUCTURE);
                         objOrArr.pop();
                     }else{
-                        t = new JsonToken(i, "}", JsonToken.Type.STRUCTURE, true);
+                        t = new JsonToken(i, rowIndex, "}", JsonToken.Type.STRUCTURE, true);
                     }
                     break;
                 case ':':
                     if(stackPeek(objOrArr) == 0 && preNormalType == JsonToken.Type.KEY){
-                        t = new JsonToken(i, ":", JsonToken.Type.STRUCTURE);
+                        t = new JsonToken(i, rowIndex, ":", JsonToken.Type.STRUCTURE);
                     }else{
-                        t = new JsonToken(i, ":", JsonToken.Type.STRUCTURE, true);
+                        t = new JsonToken(i, rowIndex, ":", JsonToken.Type.STRUCTURE, true);
                     }
                     break;
                 case '[':
                     if(waitValue || (!finish && objOrArr.isEmpty())){
-                        t = new JsonToken(i, "[", JsonToken.Type.STRUCTURE);
+                        t = new JsonToken(i, rowIndex, "[", JsonToken.Type.STRUCTURE);
                     }else{
-                        t = new JsonToken(i, "[", JsonToken.Type.STRUCTURE, true);
+                        t = new JsonToken(i, rowIndex, "[", JsonToken.Type.STRUCTURE, true);
                     }
                     objOrArr.push(1);
                     break;
                 case ']':
                     if(stackPeek(objOrArr) == 1){
                         if(!",".equals(lastNormalLiteral)){
-                            t = new JsonToken(i, "]", JsonToken.Type.STRUCTURE);
+                            t = new JsonToken(i, rowIndex, "]", JsonToken.Type.STRUCTURE);
                         }
                         objOrArr.pop();
                     }
                     if(t == null){
-                        t = new JsonToken(i, "]", JsonToken.Type.STRUCTURE, true);
+                        t = new JsonToken(i, rowIndex, "]", JsonToken.Type.STRUCTURE, true);
                     }
                     break;
                 case ',':
                     if(!waitValue){
-                        t = new JsonToken(i, ",", JsonToken.Type.STRUCTURE);
+                        t = new JsonToken(i, rowIndex, ",", JsonToken.Type.STRUCTURE);
                     }else{
-                        t = new JsonToken(i, ",", JsonToken.Type.STRUCTURE, true);
+                        t = new JsonToken(i, rowIndex, ",", JsonToken.Type.STRUCTURE, true);
                     }
                     break;
                 case 'n':
                     String subStr = trySubString(json, i, 4);
                     if("null".equals(subStr)){
                         if(waitValue){
-                            t = new JsonToken(i, "null", JsonToken.Type.NULL);
+                            t = new JsonToken(i, rowIndex, "null", JsonToken.Type.NULL);
                         }else{
-                            t = new JsonToken(i, "null", JsonToken.Type.NULL, true);
+                            t = new JsonToken(i, rowIndex, "null", JsonToken.Type.NULL, true);
                         }
                         i += 3;
                     }
@@ -88,9 +89,9 @@ public class JsonLexicalAnalyzer {
                     subStr = trySubString(json, i, 4);
                     if("true".equals(subStr)){
                         if(waitValue){
-                            t = new JsonToken(i, "true", JsonToken.Type.BOOL);
+                            t = new JsonToken(i, rowIndex, "true", JsonToken.Type.BOOL);
                         }else{
-                            t = new JsonToken(i, "true", JsonToken.Type.BOOL, true);
+                            t = new JsonToken(i, rowIndex, "true", JsonToken.Type.BOOL, true);
                         }
                         i += 3;
                     }
@@ -99,9 +100,9 @@ public class JsonLexicalAnalyzer {
                     subStr = trySubString(json, i, 5);
                     if("false".equals(subStr)){
                         if(waitValue){
-                            t = new JsonToken(i, "false", JsonToken.Type.BOOL);
+                            t = new JsonToken(i, rowIndex, "false", JsonToken.Type.BOOL);
                         }else{
-                            t = new JsonToken(i, "false", JsonToken.Type.BOOL, true);
+                            t = new JsonToken(i, rowIndex, "false", JsonToken.Type.BOOL, true);
                         }
                         i += 4;
                     }
@@ -110,29 +111,41 @@ public class JsonLexicalAnalyzer {
                     subStr = matchString(json, i);
                     if(subStr != null){
                         if(waitValue){
-                            t = new JsonToken(i, subStr, JsonToken.Type.STR_VALUE);
+                            t = new JsonToken(i, rowIndex, subStr, JsonToken.Type.STR_VALUE);
                         }else {
                             if("{".equals(lastNormalLiteral) || ",".equals(lastNormalLiteral)){
-                                t = new JsonToken(i, subStr, JsonToken.Type.KEY);
+                                t = new JsonToken(i, rowIndex, subStr, JsonToken.Type.KEY);
                             }else{
-                                t = new JsonToken(i, subStr, JsonToken.Type.KEY, true);
+                                t = new JsonToken(i, rowIndex, subStr, JsonToken.Type.KEY, true);
                             }
                         }
                         i += subStr.length() - 1;
                     }
                     break;
+                case '\n':
+                    t = new JsonToken(i, rowIndex, "\n", JsonToken.Type.BLANK);
+                    rowIndex++;
+                    break;
                 default:
                     if(isWhitespace(ch)){
-                        String s = matchWhitespace(json, i);
-                        t = new JsonToken(i, s, JsonToken.Type.BLANK);
-                        i += s.length() - 1;
+                        StringBuilder blank = new StringBuilder();
+                        for(int bi = i; bi < len; bi++){
+                            char bc = json.charAt(bi);
+                            if(!isWhitespace(bc) || isLinefeed(bc)){
+                                break;
+                            }
+                            blank.append(bc);
+                        }
+
+                        t = new JsonToken(i, rowIndex, blank.toString(), JsonToken.Type.BLANK);
+                        i += blank.length() - 1;
                     }else{
                         String number = matchNumber(json, i);
                         if(number != null){
                             if(waitValue){
-                                t = new JsonToken(i, number, JsonToken.Type.NUMBER);
+                                t = new JsonToken(i, rowIndex, number, JsonToken.Type.NUMBER);
                             }else{
-                                t = new JsonToken(i, number, JsonToken.Type.NUMBER, true);
+                                t = new JsonToken(i, rowIndex, number, JsonToken.Type.NUMBER, true);
                             }
                             i += number.length() - 1;
                         }
@@ -148,7 +161,7 @@ public class JsonLexicalAnalyzer {
                 illegalStr.append(ch);
             }else {
                 if(illegalStr.length() > 0){
-                    tokens.add(new JsonToken(i - illegalStr.length(), illegalStr.toString(), JsonToken.Type.UNKNOWN));
+                    tokens.add(new JsonToken(i - illegalStr.length(), rowIndex, illegalStr.toString(), JsonToken.Type.UNKNOWN));
                     illegalStr = new StringBuilder();
                     if(abortWhenIncorrect){ break; }
                 }
@@ -166,11 +179,11 @@ public class JsonLexicalAnalyzer {
             }
         }
         if(illegalStr.length() > 0){
-            tokens.add(new JsonToken(i - illegalStr.length(), illegalStr.toString(), JsonToken.Type.UNKNOWN));
+            tokens.add(new JsonToken(i - illegalStr.length(), rowIndex, illegalStr.toString(), JsonToken.Type.UNKNOWN));
         }
         if(!objOrArr.isEmpty()){
             JsonToken last = tokens.removeLast();
-            tokens.add(new JsonToken(last.getStart(), last.getLiteral(), last.getType(), true));
+            tokens.add(new JsonToken(last.getStart(), rowIndex, last.getLiteral(), last.getType(), true));
         }
         return tokens;
     }
@@ -180,7 +193,12 @@ public class JsonLexicalAnalyzer {
     }
 
     private static boolean isWhitespace(char ch) {
-        return ch == ' ' || ch == '\t' || ch == '\r' || ch == '\n';
+        return ch == ' ' || ch == '\t' || ch == '\r' || isLinefeed(ch);
+    }
+
+    // 是否是换行符
+    private static boolean isLinefeed(char ch){
+        return ch == '\n';
     }
 
     private static String matchWhitespace(String str, int start){
