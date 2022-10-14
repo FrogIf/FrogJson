@@ -37,9 +37,15 @@ public class JsonEditor extends SplitPane {
             super.getItems().add(jsonTreeBox);
         }
         jsonTreeBox.setTreeRoot(root);
-        if (root != null) {
-            root.setExpanded(true);
+        int maxLen = 0;
+        for (TreeItem<TreeNodeInfo> child : root.getChildren()) {
+            TreeNodeInfo nodeInfo = child.getValue();
+            String value = nodeInfo.getValue();
+            if(value != null){
+                maxLen = Math.max(value.length(), maxLen);
+            }
         }
+        root.setExpanded(maxLen < 5000);
     }
 
 }
