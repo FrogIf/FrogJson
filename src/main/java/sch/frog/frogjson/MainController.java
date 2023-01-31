@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -315,7 +316,7 @@ public class MainController implements Initializable {
             for (File file : files) {
                 EditTabManager.TabElement tabElement = EditTabManager.addTab(mainTabPane, file.getName(), this.messageEmitter);
                 try (
-                        FileReader fileReader = new FileReader(file);
+                        FileReader fileReader = new FileReader(file, StandardCharsets.UTF_8);
                         BufferedReader reader = new BufferedReader(fileReader)
                         ){
                     StringBuilder sb = new StringBuilder();
