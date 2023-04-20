@@ -34,6 +34,8 @@ class JsonStringUtil {
     }
 
     // "{\n\t\"aaa\":\"a\\n\",\n\t\"ccc\":\"c\\r\",\n\t\"bbb\":\"b\\t\"\n}"
+    // "{\n\t\"aaa\":\"a\t\\n\",\n\t\"ccc\":\"c\\r\",\n\t\"bbb\":\"b\\t\"\n}"
+    // "{\n\t\"aaa\":\"a	\\n\",\n\t\"ccc\":\"c\\r\",\n\t\"bbb\":\"b\\t\"\n}"
     public static JsonElement fromString(String string) throws JsonParseException {
         int len = string.length();
         StringBuilder json = new StringBuilder(len);
@@ -49,7 +51,10 @@ class JsonStringUtil {
                 }else if(match(string, "\\\\", i)){
                     json.append('\\');
                     i += 2;
-                }else if(match(string, "\\n", i) || match(string, "\\t", i) || match(string, "\\r", i)){
+                }else if(match(string, "\\n", i) || match(string, "\\r", i)){
+                    i += 2;
+                }else if(match(string, "\\t", i)){
+                    json.append('\t');
                     i += 2;
                 }else{
                     json.append(ch);
