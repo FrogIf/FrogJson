@@ -1,7 +1,5 @@
 package sch.frog.frogjson.controls;
 
-import javafx.collections.ObservableList;
-import javafx.scene.Node;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TreeItem;
 import sch.frog.frogjson.MessageEmitter;
@@ -18,9 +16,8 @@ public class JsonEditor extends SplitPane {
     public JsonEditor(MessageEmitter messageEmitter) {
         super();
         this.messageEmitter = messageEmitter;
-        ObservableList<Node> items = this.getItems();
         jsonTextBox = new JsonTextBox(this.messageEmitter);
-        items.add(jsonTextBox);
+        this.getItems().add(jsonTextBox);
     }
 
     public String getJson() {
