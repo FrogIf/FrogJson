@@ -1,340 +1,172 @@
 package sch.frog.frogjson;
 
-import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Node;
-import javafx.scene.Scene;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TreeItem;
-import javafx.stage.FileChooser;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
-import sch.frog.frogjson.controls.JsonEditor;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
+import org.fxmisc.flowless.VirtualizedScrollPane;
+import org.fxmisc.richtext.CodeArea;
+import org.fxmisc.richtext.model.StyleSpans;
+import org.fxmisc.richtext.model.StyleSpansBuilder;
 import sch.frog.frogjson.json.JsonElement;
+import sch.frog.frogjson.json.JsonLexicalAnalyzer;
 import sch.frog.frogjson.json.JsonOperator;
 import sch.frog.frogjson.json.JsonParseException;
+import sch.frog.frogjson.json.JsonToken;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.util.Iterator;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainController implements Initializable {
 
-    @FXML
-    private Label msgText;
+    private final ExecutorService executor = Executors.newSingleThreadExecutor();
+
+    private String testJson = null;
+
+    private CodeArea codeArea;
 
     @FXML
-    private TabPane mainTabPane;
+    private VBox mainBox;
 
     @FXML
-    private TextField tabTitleText;
-
-    private MessageEmitter messageEmitter;
-
-    @FXML
-    protected void onCompactBtnClick() {
-        this.editJson(origin -> {
-            JsonElement jsonElement = JsonOperator.parse(origin);
-            return jsonElement.toCompressString();
-        });
-    }
-
-    @FXML
-    protected void onPrettyBtnClick() {
-        this.editJson(origin -> {
-            JsonElement jsonElement = JsonOperator.parse(origin);
-            return jsonElement.toPrettyString();
-        });
-    }
-
-    @FXML
-    protected void onToStringBtnClick() {
-        this.editJson(origin -> {
-            JsonElement jsonElement = JsonOperator.parse(origin);
-            return JsonStringUtil.toString(jsonElement);
-        });
-    }
-
-    @FXML
-    protected void onFromStringBtnClick() {
-        this.editJson(origin -> {
-            JsonElement element = JsonStringUtil.fromString(origin);
-            return element.toPrettyString();
-        });
-    }
-
-    private void editJson(IEditStrategy strategy) {
-        JsonEditor editor = getSelectEditContainer();
-        messageEmitter.clear();
-        if (editor != null) {
-            String json = editor.getJson();
-            if(json == null || json.isBlank()){
-                return;
-            }
-            try {
-                String result = strategy.edit(json);
-                editor.setJsonContent(result);
-            } catch (Exception e) {
-                messageEmitter.emitError(e.getMessage());
-            }
-        }
+    protected void onTestClick(){
+        codeArea.clear();
+        codeArea.appendText(testJson);
     }
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        messageEmitter = new MessageEmitter(msgText);
-        EditTabManager.addTab(mainTabPane, messageEmitter);
-        mainTabPane.setContextMenu(initTabPaneContextMenu(mainTabPane));
+        this.codeArea = new CodeArea();
+        VirtualizedScrollPane<CodeArea> scrollPane = new VirtualizedScrollPane<>(codeArea);
+        VBox.setVgrow(scrollPane, Priority.ALWAYS);
+        mainBox.getChildren().add(scrollPane);
+
+        // ---- highlight ----
+        codeArea.multiPlainChanges()
+                .successionEnds(Duration.ofMillis(500))
+                .retainLatestUntilLater(executor)
+                .supplyTask(() ->
+                        computeHighlightingAsync(codeArea)
+                )
+                .awaitLatest(codeArea.multiPlainChanges())
+                .filterMap(t -> {
+                    if(t.isSuccess()) {
+                        return Optional.of(t.get());
+                    } else {
+                        t.getFailure().printStackTrace();
+                        return Optional.empty();
+                    }
+                })
+                .subscribe((highlighting) -> {
+                    System.out.println("span count : " + highlighting.getSpanCount());
+                    codeArea.setStyleSpans(0, highlighting);
+                });
+
+        // shutdown executor when application exit
+        GlobalApplicationLifecycleUtil.addOnCloseListener(executor::shutdown);
     }
 
-    private interface IEditStrategy {
-        String edit(String origin) throws Exception;
+    private Task<StyleSpans<Collection<String>>> computeHighlightingAsync(CodeArea codeArea) {
+        Task<StyleSpans<Collection<String>>> task = new Task<>() {
+            @Override
+            protected StyleSpans<Collection<String>> call() {
+                return computeHighlighting(codeArea);
+            }
+        };
+        executor.execute(task);
+        return task;
+    }
+
+    private StyleSpans<Collection<String>> computeHighlighting(CodeArea codeArea) {
+        StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
+        List<JsonToken> tokens = JsonLexicalAnalyzer.lexicalAnalysis(codeArea.getText(), false);
+        if(tokens.isEmpty()){
+            spansBuilder.add(Collections.emptyList(), codeArea.getText().length());
+            return spansBuilder.create();
+        }
+        ArrayList<String> preStyles = null;
+        ArrayList<String> cursorStyles = null;
+        for (JsonToken token : tokens) {
+            JsonToken.Type type = token.getType();
+            String style;
+            switch (type){
+                case BOOL:
+                    style = "boolean";
+                    break;
+                case NULL:
+                    style = "null";
+                    break;
+                case NUMBER:
+                    style = "number";
+                    break;
+                case KEY:
+                    style = "key";
+                    break;
+                case STR_VALUE:
+                    style = "string-value";
+                    break;
+                case STRUCTURE:
+                    String literal = token.getLiteral();
+                    if("{".equals(literal) || "}".equals(literal)){ style = "brace"; }
+                    else if ("[".equals(literal) || "]".equals(literal)){ style = "bracket"; }
+                    else { style = "splitter"; }
+                    break;
+                default:
+                    style = "unknown";
+                    break;
+            }
+            ArrayList<String> styles = new ArrayList<>();
+            if(token.isError() || token.getType() == JsonToken.Type.UNKNOWN){
+                styles.add("underlined");
+            }
+            preStyles = cursorStyles;
+            cursorStyles = styles;
+            styles.add(style);
+            spansBuilder.add(styles, token.getLiteral().length());
+        }
+        if(preStyles != null){
+            JsonToken t = tokens.get(tokens.size() - 1);
+            if(t.getType() == JsonToken.Type.BLANK && t.isError()){
+                preStyles.add("underlined");
+            }
+        }
+        return spansBuilder.create();
+    }
+
+    public MainController() {
+        try(
+                InputStream inputStream = this.getClass().getClassLoader().getResourceAsStream("test.json");
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))
+        ){
+            StringBuilder sb = new StringBuilder();
+            String line = null;
+            while((line = reader.readLine()) != null){
+                sb.append(line);
+            }
+            testJson = sb.toString();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @FXML
-    protected void onNewTabBtnClick() {
-        String tabTitle = tabTitleText.getText();
-        tabTitleText.setText(null);
-        EditTabManager.addTab(mainTabPane, tabTitle, this.messageEmitter);
-    }
-
-    @FXML
-    protected void onTreeBtnClick() {
-        JsonEditor editor = getSelectEditContainer();
-        messageEmitter.clear();
-        if (editor != null) {
-            String json = editor.getJson();
-            if (json == null || json.isBlank()) {
-                editor.openTree(new TreeItem<>(new TreeNodeInfo(FrogJsonConstants.TREE_ROOT_NAME)));
-                return;
-            }
-            TreeStructJsonWriter writer = new TreeStructJsonWriter();
-            try {
-                JsonElement jsonElement = JsonOperator.parse(json);
-                jsonElement.customWrite(writer);
-                TreeItem<TreeNodeInfo> root = writer.getRoot();
-                editor.openTree(root);
-            } catch (JsonParseException e) {
-                messageEmitter.emitError(e.getMessage());
-            }
-        }
-    }
-
-    private JsonEditor getSelectEditContainer() {
-        Tab selectedItem = mainTabPane.getSelectionModel().getSelectedItem();
-        if (selectedItem != null) {
-            Node content = selectedItem.getContent();
-            if (content instanceof JsonEditor) {
-                return (JsonEditor) content;
-            }
-        }
-        return null;
-    }
-
-    private Stage aboutStage = null;
-
-    @FXML
-    protected void onAboutBtnClick() throws IOException {
-        if (aboutStage == null) {
-            aboutStage = new Stage();
-            FXMLLoader fxmlLoader = new FXMLLoader(FrogJsonApplication.class.getResource("about-view.fxml"));
-            Scene secondScene = new Scene(fxmlLoader.load(), 300, 200);
-            aboutStage.setScene(secondScene);
-            aboutStage.resizableProperty().setValue(false);
-            aboutStage.setTitle("About");
-            aboutStage.getIcons().add(ImageResources.appIcon);
-        }
-        aboutStage.show();
-        if (aboutStage.isIconified()) {
-            aboutStage.setIconified(false);
-        }else{
-            aboutStage.requestFocus();
-        }
-    }
-
-    private Stage renameStage = null;
-
-    private void openRenameStage() {
-        if(renameStage == null){
-            renameStage = new Stage();
-            FXMLLoader fxmlLoader = new FXMLLoader(FrogJsonApplication.class.getResource("rename-tab.fxml"));
-            Scene secondScene = null;
-            try {
-                secondScene = new Scene(fxmlLoader.load(), 300, 200);
-            } catch (IOException e) {
-                GlobalExceptionThrower.INSTANCE.throwException(e);
-            }
-            final RenameTabController renameTabController = fxmlLoader.getController();
-            renameTabController.setConfirmCallback(name -> {
-                if(name == null){ return; }
-                Tab selectTab = mainTabPane.getSelectionModel().getSelectedItem();
-                if(selectTab != null){
-                    selectTab.setText(name);
-                }
-            });
-            renameStage.setScene(secondScene);
-            renameStage.resizableProperty().setValue(false);
-            renameStage.setTitle("Rename");
-            renameStage.getIcons().add(ImageResources.appIcon);
-            renameStage.initStyle(StageStyle.UTILITY);
-            renameStage.setAlwaysOnTop(true);
-            renameStage.setOnShown(event -> {
-                Tab selectTab = mainTabPane.getSelectionModel().getSelectedItem();
-                if(selectTab != null){
-                    renameTabController.setOriginTabName(selectTab.getText());
-                }
-            });
-        }
-        renameStage.show();
-        if(renameStage.isIconified()){  // 判断是否最小化
-            renameStage.setIconified(false);
-        }else{
-            renameStage.requestFocus();
-        }
-    }
-
-    private ContextMenu initTabPaneContextMenu(TabPane tabPane) {
-        ContextMenu treeContextMenu = new ContextMenu();
-        MenuItem closeSelect = new MenuItem("Close");
-        closeSelect.setOnAction(actionEvent -> {
-            Tab selectTab = tabPane.getSelectionModel().getSelectedItem();
-            if(selectTab != null){
-                tabPane.getTabs().remove(selectTab);
-            }else{
-                messageEmitter.emitWarn("no tab select");
-            }
-        });
-
-        MenuItem closeOthers = new MenuItem("Close Other");
-        closeOthers.setOnAction(actionEvent -> {
-            Tab selectTab = tabPane.getSelectionModel().getSelectedItem();
-            if(selectTab != null){
-                ObservableList<Tab> tabs = tabPane.getTabs();
-                tabs.clear();
-                tabs.add(selectTab);
-            }else{
-                messageEmitter.emitWarn("no tab select");
-            }
-        });
-
-        MenuItem closeAll = new MenuItem("Close All");
-        closeAll.setOnAction(actionEvent -> {
-            tabPane.getTabs().clear();
-        });
-
-        MenuItem closeToLeft = new MenuItem("Close to Left");
-        closeToLeft.setOnAction(actionEvent -> {
-            Tab selectTab = tabPane.getSelectionModel().getSelectedItem();
-            if(selectTab != null){
-                ObservableList<Tab> tabs = tabPane.getTabs();
-                Iterator<Tab> iterator = tabs.iterator();
-                while(iterator.hasNext()){
-                    if(iterator.next() == selectTab){
-                        break;
-                    }
-                    iterator.remove();
-                }
-            }else{
-                messageEmitter.emitWarn("no tab select");
-            }
-        });
-
-        MenuItem closeToRight = new MenuItem("Close to Right");
-        closeToRight.setOnAction(actionEvent -> {
-            Tab selectTab = tabPane.getSelectionModel().getSelectedItem();
-            if(selectTab != null){
-                ObservableList<Tab> tabs = tabPane.getTabs();
-                Iterator<Tab> iterator = tabs.iterator();
-                boolean startRemove = false;
-                while(iterator.hasNext()){
-                    Tab next = iterator.next();
-                    if(startRemove){
-                        iterator.remove();
-                    }else{
-                        startRemove = next == selectTab;
-                    }
-                }
-            }else{
-                messageEmitter.emitWarn("no tab select");
-            }
-        });
-
-        MenuItem renameTab = new MenuItem("Rename");
-        renameTab.setOnAction(actionEvent -> {
-            Tab selectTab = tabPane.getSelectionModel().getSelectedItem();
-            if(selectTab != null){
-                openRenameStage();
-            }else{
-                messageEmitter.emitWarn("no tab select");
-            }
-        });
-
-        ObservableList<MenuItem> items = treeContextMenu.getItems();
-        items.add(renameTab);
-        items.add(closeOthers);
-        items.add(closeAll);
-        items.add(closeToLeft);
-        items.add(closeToRight);
-        items.add(closeSelect);
-        return treeContextMenu;
-    }
-
-    private File loadDir = null;
-
-    @FXML
-    protected void onLoadClick(){
-        FileChooser fileChooser = new FileChooser();
-        if(this.loadDir != null){
-            fileChooser.setInitialDirectory(this.loadDir);  // 指定上次加载路径为当前加载路径
-        }
-        FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("ALL files (*.*)", "*.*");
-        fileChooser.getExtensionFilters().add(extFilter);
-        List<File> files = fileChooser.showOpenMultipleDialog(FrogJsonApplication.self.getPrimaryStage());
-        if(files != null){
-            if(!files.isEmpty()){
-                File file = files.get(0);
-                if(file.isFile()){
-                    File dir = file.getParentFile();
-                    if(dir.isDirectory()){
-                        this.loadDir = dir;
-                    }
-                }
-            }
-            for (File file : files) {
-                EditTabManager.TabElement tabElement = EditTabManager.addTab(mainTabPane, file.getName(), this.messageEmitter);
-                try (
-                        FileReader fileReader = new FileReader(file, StandardCharsets.UTF_8);
-                        BufferedReader reader = new BufferedReader(fileReader)
-                        ){
-                    StringBuilder sb = new StringBuilder();
-                    String line;
-                    boolean start = true;
-                    while((line = reader.readLine()) != null){
-                        if(!start){
-                            sb.append('\n');
-                        }else{
-                            start = false;
-                        }
-                        sb.append(line);
-                    }
-                    tabElement.getJsonEditor().setJsonContent(sb.toString());
-                } catch (IOException e) {
-                    messageEmitter.emitError(e.getMessage());
-                }
-            }
-        }
+    protected void onPrettyClick() throws JsonParseException {
+        String text = codeArea.getText();
+        JsonElement jsonElement = JsonOperator.parse(text);
+        codeArea.clear();
+        codeArea.appendText(jsonElement.toPrettyString());
     }
 }
