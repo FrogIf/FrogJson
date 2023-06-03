@@ -3,22 +3,14 @@ package sch.frog.frogjson.controls;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import org.fxmisc.richtext.CodeArea;
-import org.fxmisc.richtext.model.StyleSpan;
-import org.fxmisc.richtext.model.StyleSpans;
-import org.fxmisc.richtext.model.StyleSpansBuilder;
+import org.fxmisc.richtext.model.*;
 import sch.frog.frogjson.GlobalApplicationLifecycleUtil;
 import sch.frog.frogjson.json.JsonLexicalAnalyzer;
 import sch.frog.frogjson.json.JsonToken;
 import sch.frog.frogjson.util.StringUtils;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -92,6 +84,9 @@ public class JsonAssist {
             bracketHighLight.beginHighLight(codeArea);
         }
 
+        // 一段文本(即一行)中所允许包含的最大span数量
+        private static final int MAX_SPAN_COUNT_IN_ONE_PARAGRAPH = 2000;
+
         private StyleSpans<Collection<String>> computeHighlighting(CustomCodeArea codeArea) {
             StyleSpansBuilder<Collection<String>> spansBuilder = new StyleSpansBuilder<>();
             List<JsonToken> tokens = getAssistObject(codeArea).getTokens();
@@ -101,6 +96,7 @@ public class JsonAssist {
             }
             ArrayList<String> preStyles = null;
             ArrayList<String> cursorStyles = null;
+            ArrayList<StyleBox> styleList = new ArrayList<>(tokens.size());
             for (JsonToken token : tokens) {
                 JsonToken.Type type = token.getType();
                 String style;
@@ -137,12 +133,53 @@ public class JsonAssist {
                 preStyles = cursorStyles;
                 cursorStyles = styles;
                 styles.add(style);
-                spansBuilder.add(styles, token.getLiteral().length());
+                styleList.add(new StyleBox(token.getLiteral(), styles));
             }
             if(preStyles != null){
                 JsonToken t = tokens.get(tokens.size() - 1);
                 if(t.getType() == JsonToken.Type.BLANK && t.isError()){
                     preStyles.add("underlined");
+                }
+            }
+
+            if(styleList.size() > MAX_SPAN_COUNT_IN_ONE_PARAGRAPH){
+                // 如果一行包含的spanCount过多, 则多出部分不高亮
+                StyledDocument<Collection<String>, String, Collection<String>> doc = codeArea.getDocument();
+                List<Paragraph<Collection<String>, String, Collection<String>>> paragraphs = doc.getParagraphs();
+                int[] paragraphRange = new int[paragraphs.size() + 1];
+                int i = 1;
+                for (Paragraph<Collection<String>, String, Collection<String>> paragraph : paragraphs) {
+                    String text = paragraph.getText();
+                    paragraphRange[i] = paragraphRange[i - 1] + text.length();
+                    i++;
+                }
+                int cursor = 1;
+                int spanCount = 0;
+                int textLen = 0;
+                boolean plain;
+                int plainTextLen = 0;
+                for (StyleBox styleBox : styleList) {
+                    textLen += styleBox.token.length();
+                    spanCount++;
+                    plain = spanCount > MAX_SPAN_COUNT_IN_ONE_PARAGRAPH;
+                    if(!plain){
+                        spansBuilder.add(styleBox.styles, styleBox.token.length());
+                    }else{
+                        plainTextLen += styleBox.token.length();
+                    }
+                    if(textLen >= paragraphRange[cursor]){
+                        if(plain){
+                            spansBuilder.add(Collections.singletonList("unknown"), plainTextLen);
+                        }
+                        textLen = 0;
+                        spanCount = 0;
+                        cursor++;
+                        plainTextLen = 0;
+                    }
+                }
+            }else{
+                for (StyleBox styleBox : styleList) {
+                    spansBuilder.add(styleBox.styles, styleBox.token.length());
                 }
             }
             return spansBuilder.create();
@@ -307,6 +344,15 @@ public class JsonAssist {
                 bracketPairs = JsonLexicalAnalyzer.getBracketPair(tokens);
             }
             return bracketPairs;
+        }
+    }
+
+    private static class StyleBox{
+        private String token;
+        private List<String> styles;
+        public StyleBox(String token, List<String> styles) {
+            this.token = token;
+            this.styles = styles;
         }
     }
 }

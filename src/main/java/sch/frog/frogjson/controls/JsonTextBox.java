@@ -10,10 +10,12 @@ import javafx.scene.layout.BorderPane;
 import org.fxmisc.flowless.VirtualizedScrollPane;
 import org.fxmisc.richtext.CodeArea;
 import org.fxmisc.richtext.LineNumberFactory;
+import org.fxmisc.richtext.model.Paragraph;
 import sch.frog.frogjson.ClipboardUtil;
 import sch.frog.frogjson.MessageEmitter;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -57,9 +59,19 @@ public class JsonTextBox extends BorderPane {
         {
             if(e.getCode() == KeyCode.ENTER){
                 int caretPosition = codeArea.getCaretPosition();
-                int currentParagraph = codeArea.getCurrentParagraph();
-                Matcher m0 = whiteSpace.matcher(codeArea.getParagraph(currentParagraph - 1).getSegments().get(0));
-                if(m0.find()){ Platform.runLater(() -> codeArea.insertText(caretPosition, m0.group())); }
+                int currentParagraphIndex = codeArea.getCurrentParagraph();
+                Paragraph<Collection<String>, String, Collection<String>> preParagraph = codeArea.getParagraph(currentParagraphIndex - 1);
+                String tail = preParagraph.getText().trim();
+                boolean preLineEndWithBracket = tail.endsWith("{") || tail.endsWith("[");
+
+                Paragraph<Collection<String>, String, Collection<String>> currentParagraph = codeArea.getParagraph(currentParagraphIndex);
+                String postText = currentParagraph.getText();
+                boolean postLineStartWithBracket = postText.startsWith("}") || postText.startsWith("]");
+
+                Matcher m0 = whiteSpace.matcher(preParagraph.getSegments().get(0));
+                Platform.runLater(() -> {
+                    codeArea.insertText(caretPosition, (m0.find() ? m0.group() : "") + (preLineEndWithBracket && !postLineStartWithBracket ? "    " : ""));
+                });
             }
         });
         JsonAssist highlight = JsonAssist.getInstance();

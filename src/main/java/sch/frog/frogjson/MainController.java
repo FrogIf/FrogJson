@@ -6,13 +6,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Label;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
-import javafx.scene.control.TextField;
-import javafx.scene.control.TreeItem;
+import javafx.scene.control.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -38,9 +32,6 @@ public class MainController implements Initializable {
 
     @FXML
     private TabPane mainTabPane;
-
-    @FXML
-    private TextField tabTitleText;
 
     private MessageEmitter messageEmitter;
 
@@ -106,9 +97,7 @@ public class MainController implements Initializable {
 
     @FXML
     protected void onNewTabBtnClick() {
-        String tabTitle = tabTitleText.getText();
-        tabTitleText.setText(null);
-        EditTabManager.addTab(mainTabPane, tabTitle, this.messageEmitter);
+        EditTabManager.addTab(mainTabPane, this.messageEmitter);
     }
 
     @FXML
