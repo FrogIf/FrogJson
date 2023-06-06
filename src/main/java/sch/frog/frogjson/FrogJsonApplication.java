@@ -2,6 +2,7 @@ package sch.frog.frogjson;
 
 import javafx.application.Application;
 import javafx.application.HostServices;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -30,6 +31,8 @@ public class FrogJsonApplication extends Application {
         this.primaryStage = stage;
         stage.setOnCloseRequest(e -> {
             GlobalApplicationLifecycleUtil.stop();
+            Platform.exit();
+            System.exit(0);
         });
     }
 
