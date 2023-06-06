@@ -18,4 +18,12 @@ public class JsonOperator {
         return JsonSyntacticAnalysis.syntacticAnalysis(tokens, json);
     }
 
+    public static JsonElement load(Object obj){
+        if(obj instanceof Iterable){
+            return JsonArray.load((Iterable)obj);
+        }else{
+            return JsonObject.load(obj);
+        }
+    }
+
 }

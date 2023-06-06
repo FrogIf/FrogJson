@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.Pane?>
+<VBox prefHeight="600.0" xmlns="http://javafx.com/javafx/11" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sch.frog.frogjson.ExtendController">
+    <ToolBar>
+        <Button text="xml to json" onAction="#onFromXMLClick" styleClass="frog-btn" />
+        <Button text="json to xml" onAction="#onToXMLClick" styleClass="frog-btn" />
+        <Separator orientation="VERTICAL"/>
+        <Button text="yaml to json" onAction="#onFromYAMLClick" styleClass="frog-btn" />
+        <Button text="json to yaml" onAction="#onToYAMLClick" styleClass="frog-btn" />
+    </ToolBar>
+    <VBox fx:id="textContainer" VBox.vgrow="ALWAYS">
+
+    </VBox>
+    <Pane style="-fx-background-color: #acacac;">
+        <Label fx:id="msgLabel" />
+    </Pane>
+</VBox>

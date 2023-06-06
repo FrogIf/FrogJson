@@ -14,6 +14,7 @@ import sch.frog.frogjson.controls.JsonEditor;
 import sch.frog.frogjson.json.JsonElement;
 import sch.frog.frogjson.json.JsonOperator;
 import sch.frog.frogjson.json.JsonParseException;
+import sch.frog.frogjson.util.StringUtils;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -324,6 +325,46 @@ public class MainController implements Initializable {
                     messageEmitter.emitError(e.getMessage());
                 }
             }
+        }
+    }
+
+    private Stage extendStage;
+
+    @FXML
+    protected void onExtendClick() throws IOException {
+        if (extendStage == null) {
+            extendStage = new Stage();
+            FXMLLoader fxmlLoader = new FXMLLoader(FrogJsonApplication.class.getResource("extend-view.fxml"));
+            Scene secondScene = new Scene(fxmlLoader.load(), 600, 400);
+            extendStage.setScene(secondScene);
+            extendStage.resizableProperty().setValue(true);
+            extendStage.setTitle("Extend");
+            extendStage.getIcons().add(ImageResources.appIcon);
+            ExtendController controller = fxmlLoader.getController();
+            controller.setGetText(() -> {
+                JsonEditor selectEditContainer = this.getSelectEditContainer();
+                if(selectEditContainer != null){
+                    return selectEditContainer.getJson();
+                }
+                return null;
+            });
+            controller.setSetText(json -> {
+                JsonEditor selectEditContainer = this.getSelectEditContainer();
+                if(selectEditContainer != null){
+                    if(StringUtils.isBlank(selectEditContainer.getJson())){
+                        selectEditContainer.setJsonContent(json);
+                        return;
+                    }
+                }
+                EditTabManager.addTab(mainTabPane, this.messageEmitter);
+                this.getSelectEditContainer().setJsonContent(json);
+            });
+        }
+        extendStage.show();
+        if (extendStage.isIconified()) {
+            extendStage.setIconified(false);
+        }else{
+            extendStage.requestFocus();
         }
     }
 }

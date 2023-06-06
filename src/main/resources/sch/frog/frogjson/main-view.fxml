@@ -4,15 +4,19 @@
 <?import javafx.scene.layout.*?>
 <VBox prefHeight="600.0" xmlns="http://javafx.com/javafx/11" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sch.frog.frogjson.MainController">
     <ToolBar>
-        <Button onAction="#onLoadClick" text="Load" />
-        <Button onAction="#onPrettyBtnClick" text="Pretty" />
-        <Button onAction="#onCompactBtnClick" text="Compact" />
-        <Button onAction="#onFromStringBtnClick" text="FromString" />
-        <Button onAction="#onToStringBtnClick" text="ToString" />
-        <Button onAction="#onTreeBtnClick" text="Tree" />
-        <Button onAction="#onNewTabBtnClick" text="+" prefWidth="26" maxWidth="26" minWidth="26" prefHeight="26.0" maxHeight="26.0" minHeight="26.0" style="-fx-background-radius:13; -fx-border-radius:13;" />
+        <Button onAction="#onLoadClick" text="Load" styleClass="frog-btn" />
+        <Separator orientation="VERTICAL"/>
+        <Button onAction="#onPrettyBtnClick" text="Pretty" styleClass="frog-btn" />
+        <Button onAction="#onCompactBtnClick" text="Compact" styleClass="frog-btn" />
+        <Button onAction="#onFromStringBtnClick" text="FromString" styleClass="frog-btn" />
+        <Button onAction="#onToStringBtnClick" text="ToString" styleClass="frog-btn" />
+        <Button onAction="#onTreeBtnClick" text="Tree" styleClass="frog-btn" />
+        <Separator orientation="VERTICAL"/>
+        <Button onAction="#onExtendClick" text="Extend" styleClass="frog-btn" />
+        <Separator orientation="VERTICAL"/>
+        <Button onAction="#onNewTabBtnClick" text="+" styleClass="frog-btn" prefWidth="26" maxWidth="26" minWidth="26" prefHeight="26.0" maxHeight="26.0" minHeight="26.0" style="-fx-background-radius:13; -fx-border-radius:13;" />
         <Pane HBox.hgrow="ALWAYS"><!-- nothing --></Pane>
-        <Button alignment="CENTER_RIGHT" onAction="#onAboutBtnClick" style="-fx-background-color: #0090ff;" text="i" textFill="WHITE" />
+        <Button alignment="CENTER_RIGHT" onAction="#onAboutBtnClick" styleClass="frog-btn" style="-fx-background-color: #0090ff;" text="i" textFill="WHITE" />
     </ToolBar>
     <TabPane fx:id="mainTabPane" prefHeight="229.0" prefWidth="290.0" VBox.vgrow="ALWAYS" tabMinWidth="60">
     </TabPane>

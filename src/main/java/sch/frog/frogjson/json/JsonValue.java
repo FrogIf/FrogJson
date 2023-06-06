@@ -11,7 +11,7 @@ class StringJsonValue implements JsonValue<String> {
     private final String val;
 
     public StringJsonValue(String val) {
-        this.val = val;
+        this.val = fixVal(val);
     }
 
     public String getValue() {
@@ -21,6 +21,22 @@ class StringJsonValue implements JsonValue<String> {
     @Override
     public void write(IJsonValueWriter writer) {
         writer.writeString(this.val);
+    }
+
+    private String fixVal(String val){
+        if(val != null){
+            StringBuilder sb = new StringBuilder();
+            for(int i = 0, len = val.length(); i < len; i++){
+                char ch = val.charAt(i);
+                if(ch == '\n'){
+                    sb.append("\\n");
+                }else{
+                    sb.append(ch);
+                }
+            }
+            val = sb.toString();
+        }
+        return val;
     }
 
 }
