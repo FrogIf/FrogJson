@@ -3,14 +3,25 @@ package sch.frog.frogjson.controls;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import org.fxmisc.richtext.CodeArea;
-import org.fxmisc.richtext.model.*;
+import org.fxmisc.richtext.model.Paragraph;
+import org.fxmisc.richtext.model.StyleSpan;
+import org.fxmisc.richtext.model.StyleSpans;
+import org.fxmisc.richtext.model.StyleSpansBuilder;
+import org.fxmisc.richtext.model.StyledDocument;
 import sch.frog.frogjson.GlobalApplicationLifecycleUtil;
+import sch.frog.frogjson.json.DeserializerConfiguration;
 import sch.frog.frogjson.json.JsonLexicalAnalyzer;
 import sch.frog.frogjson.json.JsonToken;
 import sch.frog.frogjson.util.StringUtils;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -117,7 +128,7 @@ public class JsonAssist {
                         style = "string-value";
                         break;
                     case STRUCTURE:
-                        String literal = token.getOrigin();
+                        String literal = token.getLiteral();
                         if("{".equals(literal) || "}".equals(literal)){ style = "brace"; }
                         else if ("[".equals(literal) || "]".equals(literal)){ style = "bracket"; }
                         else { style = "splitter"; }
@@ -133,7 +144,7 @@ public class JsonAssist {
                 preStyles = cursorStyles;
                 cursorStyles = styles;
                 styles.add(style);
-                styleList.add(new StyleBox(token.getOrigin(), styles));
+                styleList.add(new StyleBox(token.getLiteral(), styles));
             }
             if(preStyles != null){
                 JsonToken t = tokens.get(tokens.size() - 1);
@@ -316,6 +327,12 @@ public class JsonAssist {
         }
     }
 
+    private static final DeserializerConfiguration DESERIALIZER_CONFIGURATION = new DeserializerConfiguration();
+    static {
+        DESERIALIZER_CONFIGURATION.setEscape(false);
+        DESERIALIZER_CONFIGURATION.setAbortWhenIncorrect(false);
+    }
+
     private static class AssistObject{
         private final CustomCodeArea codeArea;
 
@@ -325,7 +342,7 @@ public class JsonAssist {
 
         private boolean bracketHighlight = false;
 
-        private ArrayList<Pair> matchPairs = new ArrayList<>();
+        private final ArrayList<Pair> matchPairs = new ArrayList<>();
         private List<JsonToken> tokens;
         private List<JsonLexicalAnalyzer.BracketPair> bracketPairs;
 
@@ -333,7 +350,7 @@ public class JsonAssist {
             if(tokens == null){
                 String text = codeArea.getText();
                 if(StringUtils.isNotBlank(text)){
-                    tokens = JsonLexicalAnalyzer.lexicalAnalysis(text);
+                    tokens = JsonLexicalAnalyzer.lexicalAnalysis(text, DESERIALIZER_CONFIGURATION);
                 }
             }
             return tokens;
@@ -348,8 +365,8 @@ public class JsonAssist {
     }
 
     private static class StyleBox{
-        private String token;
-        private List<String> styles;
+        private final String token;
+        private final List<String> styles;
         public StyleBox(String token, List<String> styles) {
             this.token = token;
             this.styles = styles;

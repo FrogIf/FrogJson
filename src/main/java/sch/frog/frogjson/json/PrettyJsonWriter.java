@@ -13,11 +13,21 @@ class PrettyJsonWriter implements IJsonWriter, IJsonValueWriter{
 
     private int tab = 0;
 
+    private final SerializerConfiguration configuration;
+
+    public PrettyJsonWriter(SerializerConfiguration configuration) {
+        this.configuration = configuration;
+    }
+
     private final StringBuilder sb = new StringBuilder();
 
     @Override
     public void writeString(String str) {
-        sb.append(JsonWord.QUOTATION).append(JsonEscapeUtils.unescape(str)).append(JsonWord.QUOTATION);
+        if(configuration.isEscape()){
+            sb.append(JsonWord.QUOTATION).append(JsonEscapeUtils.escapeForSerialize(str)).append(JsonWord.QUOTATION);
+        }else{
+            sb.append(JsonWord.QUOTATION).append(str).append(JsonWord.QUOTATION);
+        }
     }
 
     @Override
@@ -34,8 +44,13 @@ class PrettyJsonWriter implements IJsonWriter, IJsonValueWriter{
             String retract = TAB_SPACE.repeat(tab);
             while (true) {
                 Map.Entry<String, JsonValue<?>> entry = iterator.next();
-                sb.append(retract).append(JsonWord.QUOTATION).append(JsonEscapeUtils.unescape(entry.getKey())).append(JsonWord.QUOTATION)
-                        .append(JsonWord.COLON).append(SPACE);
+                if(configuration.isEscape()){
+                    sb.append(retract).append(JsonWord.QUOTATION).append(JsonEscapeUtils.escapeForSerialize(entry.getKey())).append(JsonWord.QUOTATION)
+                            .append(JsonWord.COLON).append(SPACE);
+                }else{
+                    sb.append(retract).append(JsonWord.QUOTATION).append(entry.getKey()).append(JsonWord.QUOTATION)
+                            .append(JsonWord.COLON).append(SPACE);
+                }
                 entry.getValue().write(this);
                 if(iterator.hasNext()){
                     sb.append(JsonWord.COMMA).append(NEXT_LINE);

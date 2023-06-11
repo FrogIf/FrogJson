@@ -72,14 +72,24 @@ public class JsonObject implements JsonElement {
 
     @Override
     public String toCompressString() {
-        CompactJsonWriter writer = new CompactJsonWriter();
+        return toCompressString(new SerializerConfiguration());
+    }
+
+    @Override
+    public String toPrettyString() {
+        return toPrettyString(new SerializerConfiguration());
+    }
+
+    @Override
+    public String toCompressString(SerializerConfiguration configuration) {
+        CompactJsonWriter writer = new CompactJsonWriter(configuration);
         writer.writeObject(this);
         return writer.toJson();
     }
 
     @Override
-    public String toPrettyString() {
-        PrettyJsonWriter writer = new PrettyJsonWriter();
+    public String toPrettyString(SerializerConfiguration configuration) {
+        PrettyJsonWriter writer = new PrettyJsonWriter(configuration);
         writer.writeObject(this);
         return writer.toJson();
     }

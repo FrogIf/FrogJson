@@ -6,5 +6,9 @@ public interface JsonElement {
 
     String toPrettyString();
 
+    String toCompressString(SerializerConfiguration configuration);
+
+    String toPrettyString(SerializerConfiguration configuration);
+
     void customWrite(IJsonWriter jsonWriter);
 }

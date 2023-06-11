@@ -26,9 +26,9 @@ public class JsonEscapeUtils {
 
     }
     /**
-     * 转义字符串
+     * 序列化 转义字符串
      */
-    public static String unescape(String origin){
+    public static String escapeForSerialize(String origin){
         if(origin == null){ return null; }
         StringBuilder sb = new StringBuilder();
         for(int i = 0, len = origin.length(); i < len; i++){
@@ -42,7 +42,10 @@ public class JsonEscapeUtils {
         return sb.toString();
     }
 
-    public static String escape(String origin){
+    /**
+     * 反序列化 转义
+     */
+    public static String escapeForDeserialize(String origin){
         if(origin == null){ return null; }
         StringBuilder sb = new StringBuilder();
         for(int i = 0, len = origin.length(); i < len; i++){

@@ -4,13 +4,15 @@ import java.util.List;
 
 public class JsonOperator {
 
+    private static final DeserializerConfiguration DEFAULT_DESERIALIZER_CONFIGURATION = new DeserializerConfiguration();
+
     public static JsonElement parse(String json) throws JsonParseException {
-        return parse(json, DeserializerFeature.Escape, DeserializerFeature.AbortWhenIncorrect);
+        return parse(json, DEFAULT_DESERIALIZER_CONFIGURATION);
     }
 
-    public static JsonElement parse(String json, DeserializerFeature... features) throws JsonParseException {
+    public static JsonElement parse(String json, DeserializerConfiguration configuration) throws JsonParseException {
         // 词法分析
-        List<JsonToken> tokens = JsonLexicalAnalyzer.lexicalAnalysis(json, features);
+        List<JsonToken> tokens = JsonLexicalAnalyzer.lexicalAnalysis(json, configuration);
         if(!tokens.isEmpty()){
             JsonToken last = tokens.get(tokens.size() - 1);
             if(last.isError()){

@@ -5,11 +5,21 @@ import java.util.Map;
 
 class CompactJsonWriter implements IJsonWriter, IJsonValueWriter {
 
+    private final SerializerConfiguration configuration;
+
+    public CompactJsonWriter(SerializerConfiguration configuration) {
+        this.configuration = configuration;
+    }
+
     private final StringBuilder sb = new StringBuilder();
 
     @Override
     public void writeString(String str) {
-        sb.append(JsonWord.QUOTATION).append(JsonEscapeUtils.unescape(str)).append(JsonWord.QUOTATION);
+        if(configuration.isEscape()){
+            sb.append(JsonWord.QUOTATION).append(JsonEscapeUtils.escapeForSerialize(str)).append(JsonWord.QUOTATION);
+        }else{
+            sb.append(JsonWord.QUOTATION).append(str).append(JsonWord.QUOTATION);
+        }
     }
 
     @Override
@@ -29,7 +39,11 @@ class CompactJsonWriter implements IJsonWriter, IJsonValueWriter {
                 sb.append(JsonWord.COMMA);
             }
             Map.Entry<String, JsonValue<?>> entry = iterator.next();
-            sb.append(JsonWord.QUOTATION).append(JsonEscapeUtils.unescape(entry.getKey())).append(JsonWord.QUOTATION).append(JsonWord.COLON);
+            if(configuration.isEscape()){
+                sb.append(JsonWord.QUOTATION).append(JsonEscapeUtils.escapeForSerialize(entry.getKey())).append(JsonWord.QUOTATION).append(JsonWord.COLON);
+            }else{
+                sb.append(JsonWord.QUOTATION).append(entry.getKey()).append(JsonWord.QUOTATION).append(JsonWord.COLON);
+            }
             entry.getValue().write(this);
         }
         sb.append(JsonWord.OBJECT_END);

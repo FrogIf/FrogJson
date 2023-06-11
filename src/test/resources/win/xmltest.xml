@@ -1,0 +1,54 @@
+<res>
+    <header key="sss" val="sdf">
+        <msgId>0000211</msgId>
+        <hdlSts>A</hdlSts>
+        <bdFlg>0</bdFlg>
+    </header>
+    <body width="10" height="30">
+        <qrOvertimeFlag>Y</qrOvertimeFlag>
+        <orderTrans>
+            <tranSeq>66807478</tranSeq>
+            <merchantNo>104320553990088</merchantNo>
+            <orderNo>2439665</orderNo>
+            <custTranId></custTranId>
+            <tranCode>01</tranCode>
+            <tranTime>20190704134549</tranTime>
+            <tranAmount>0.01</tranAmount>
+            <tranStatus>1</tranStatus>
+            <unionPaySeq></unionPaySeq>
+        </orderTrans>
+        <orderTrans>
+            <tranSeq>66807491</tranSeq>
+            <merchantNo>104320553990088</merchantNo>
+            <orderNo>2439665</orderNo>
+            <custTranId>1043205539900882439665</custTranId>
+            <tranCode>06</tranCode>
+            <tranTime>20190704163313</tranTime>
+            <tranAmount>0.01</tranAmount>
+            <tranStatus>2</tranStatus>
+            <unionPaySeq></unionPaySeq>
+        </orderTrans>
+        <orderTrans>
+            <tranSeq>66807492</tranSeq>
+            <merchantNo>104320553990088</merchantNo>
+            <orderNo>2439665</orderNo>
+            <custTranId>1043205539900882439665</custTranId>
+            <tranCode>06</tranCode>
+            <tranTime>20190704163414</tranTime>
+            <tranAmount>0.01</tranAmount>
+            <tranStatus>2</tranStatus>
+            <unionPaySeq></unionPaySeq>
+        </orderTrans>
+        <orderTrans>
+            <tranSeq>66807495</tranSeq>
+            <merchantNo>104320553990088</merchantNo>
+            <orderNo>2439665</orderNo>
+            <custTranId>1043205539900882439665</custTranId>
+            <tranCode>06</tranCode>
+            <tranTime>20190705092338</tranTime>
+            <tranAmount>0.01</tranAmount>
+            <tranStatus>1</tranStatus>
+            <unionPaySeq></unionPaySeq>
+        </orderTrans>
+    </body>
+</res>

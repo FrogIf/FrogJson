@@ -11,13 +11,9 @@ public class JsonLexicalAnalyzer {
         // do nothing
     }
 
-    public static List<JsonToken> lexicalAnalysis(String json, DeserializerFeature... features){
-        boolean abortWhenIncorrect = false;
-        boolean escape = false;
-        for (DeserializerFeature feature : features) {
-            abortWhenIncorrect |= feature == DeserializerFeature.AbortWhenIncorrect;
-            escape |= feature == DeserializerFeature.Escape;
-        }
+    public static List<JsonToken> lexicalAnalysis(String json, DeserializerConfiguration configuration){
+        boolean abortWhenIncorrect = configuration.isAbortWhenIncorrect();
+        boolean escape = configuration.isEscape();
         LinkedList<JsonToken> tokens = new LinkedList<>();
         StringBuilder illegalStr = new StringBuilder();
         boolean waitValue = false;
@@ -120,7 +116,7 @@ public class JsonLexicalAnalyzer {
                         valStr = valStr.substring(1, valStr.length() - 1);
                     }
                     if(escape){
-                        valStr = "\"" + JsonEscapeUtils.escape(valStr) + "\"";
+                        valStr = "\"" + JsonEscapeUtils.escapeForDeserialize(valStr) + "\"";
                     }else{
                         valStr = subStr;
                     }

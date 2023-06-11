@@ -1,7 +1,10 @@
 package sch.frog.frogjson;
 
 import javafx.scene.control.TreeItem;
-import sch.frog.frogjson.json.*;
+import sch.frog.frogjson.json.IJsonValueWriter;
+import sch.frog.frogjson.json.JsonArray;
+import sch.frog.frogjson.json.JsonObject;
+import sch.frog.frogjson.json.JsonValue;
 
 import java.util.Iterator;
 import java.util.Map;
@@ -27,7 +30,7 @@ public class TreeStructJsonWriter implements IJsonValueWriter {
 
     @Override
     public void writeString(String str) {
-        this.valueString = QUOTATION + JsonEscapeUtils.unescape(str) + QUOTATION;
+        this.valueString = QUOTATION + str + QUOTATION;
     }
 
     @Override
@@ -48,7 +51,7 @@ public class TreeStructJsonWriter implements IJsonValueWriter {
             Map.Entry<String, JsonValue<?>> entry = iterator.next();
             TreeItem<TreeNodeInfo> node = new TreeItem<>();
 
-            TreeNodeInfo treeNodeInfo = new TreeNodeInfo(JsonEscapeUtils.unescape(entry.getKey()));
+            TreeNodeInfo treeNodeInfo = new TreeNodeInfo(entry.getKey());
 
             cursorParentStack.push(node);
             entry.getValue().write(this);
