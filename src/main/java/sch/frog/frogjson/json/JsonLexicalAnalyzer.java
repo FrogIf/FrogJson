@@ -11,7 +11,13 @@ public class JsonLexicalAnalyzer {
         // do nothing
     }
 
-    public static List<JsonToken> lexicalAnalysis(String json, boolean abortWhenIncorrect){
+    public static List<JsonToken> lexicalAnalysis(String json, DeserializerFeature... features){
+        boolean abortWhenIncorrect = false;
+        boolean escape = false;
+        for (DeserializerFeature feature : features) {
+            abortWhenIncorrect |= feature == DeserializerFeature.AbortWhenIncorrect;
+            escape |= feature == DeserializerFeature.Escape;
+        }
         LinkedList<JsonToken> tokens = new LinkedList<>();
         StringBuilder illegalStr = new StringBuilder();
         boolean waitValue = false;
@@ -107,19 +113,27 @@ public class JsonLexicalAnalyzer {
                     }
                     break;
                 case '"':
-                    subStr = matchString(json, i);
-                    if(subStr != null){
-                        if(waitValue){
-                            t = new JsonToken(i, subStr, JsonToken.Type.STR_VALUE);
-                        }else {
-                            if("{".equals(lastNormalLiteral) || ",".equals(lastNormalLiteral)){
-                                t = new JsonToken(i, subStr, JsonToken.Type.KEY);
-                            }else{
-                                t = new JsonToken(i, subStr, JsonToken.Type.KEY, true);
-                            }
-                        }
-                        i += subStr.length() - 1;
+                    RefObj<Boolean> check = new RefObj<>(false);
+                    subStr = matchString(json, i, check);
+                    String valStr = subStr;
+                    if(check.value){
+                        valStr = valStr.substring(1, valStr.length() - 1);
                     }
+                    if(escape){
+                        valStr = "\"" + JsonEscapeUtils.escape(valStr) + "\"";
+                    }else{
+                        valStr = subStr;
+                    }
+                    if(waitValue){
+                        t = new JsonToken(i, valStr, JsonToken.Type.STR_VALUE, !check.value);
+                    }else {
+                        if("{".equals(lastNormalLiteral) || ",".equals(lastNormalLiteral)){
+                            t = new JsonToken(i, valStr, JsonToken.Type.KEY, !check.value);
+                        }else{
+                            t = new JsonToken(i, valStr, JsonToken.Type.KEY, true);
+                        }
+                    }
+                    i += subStr.length() - 1;
                     break;
                 default:
                     if(isWhitespace(ch)){
@@ -195,7 +209,8 @@ public class JsonLexicalAnalyzer {
         return sb.toString();
     }
 
-    private static String matchString(String str, int start){
+    private static String matchString(String str, int start, RefObj<Boolean> check){
+        check.value = false;
         StringBuilder result = new StringBuilder();
         int i = start;
         int len = str.length();
@@ -206,39 +221,10 @@ public class JsonLexicalAnalyzer {
         while (i < len) {
             ch = str.charAt(i);
             if (ch == '"') {
+                check.value = true;
                 result.append('"');
                 break;
-            } else if (ch == '\\') {
-                i++;
-                if (i >= len) {
-                    return result.toString();
-                }
-                ch = str.charAt(i);
-                if (isEscape(ch)) {
-                    result.append('\\').append(ch);
-                    i++;
-                } else if (ch == 'u')  // 4 hex digits
-                {
-                    i++;
-                    if (i + 4 > len) {
-                        return result.toString();
-                    }
-                    result.append("\\u");
-                    for (int j = 0; j < 4; j++) {
-                        ch = str.charAt(i + j);
-                        if (isHex(ch)) {
-                            result.append(ch);
-                        } else {
-                            return result.toString();
-                        }
-                    }
-                    i += 4;
-                } else {
-                    return result.toString();
-                }
-            } else if(ch == '\n'){
-                return null;
-            }else{
+            } else{
                 result.append(ch);
                 i++;
             }
@@ -326,14 +312,6 @@ public class JsonLexicalAnalyzer {
         }else{
             return str.substring(start);
         }
-    }
-
-    private static boolean isEscape(char ch) {
-        return ch == '"' || ch == '\\' || ch == '/' || ch == 'b' || ch == 'f' || ch == 'r' || ch == 'n' || ch == 't';
-    }
-
-    private static boolean isHex(char ch) {
-        return (ch >= '0' && ch <= '9') || (ch >= 'A' && ch <= 'F') || (ch >= 'a' && ch <= 'f');
     }
 
     public static List<BracketPair> getBracketPair(List<JsonToken> tokens){

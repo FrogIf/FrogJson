@@ -9,7 +9,7 @@ class CompactJsonWriter implements IJsonWriter, IJsonValueWriter {
 
     @Override
     public void writeString(String str) {
-        sb.append(JsonWord.QUOTATION).append(str).append(JsonWord.QUOTATION);
+        sb.append(JsonWord.QUOTATION).append(JsonEscapeUtils.unescape(str)).append(JsonWord.QUOTATION);
     }
 
     @Override
@@ -29,7 +29,7 @@ class CompactJsonWriter implements IJsonWriter, IJsonValueWriter {
                 sb.append(JsonWord.COMMA);
             }
             Map.Entry<String, JsonValue<?>> entry = iterator.next();
-            sb.append(JsonWord.QUOTATION).append(entry.getKey()).append(JsonWord.QUOTATION).append(JsonWord.COLON);
+            sb.append(JsonWord.QUOTATION).append(JsonEscapeUtils.unescape(entry.getKey())).append(JsonWord.QUOTATION).append(JsonWord.COLON);
             entry.getValue().write(this);
         }
         sb.append(JsonWord.OBJECT_END);

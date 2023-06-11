@@ -37,6 +37,14 @@ public class JsonToken {
         return error;
     }
 
+    public String getOrigin(){
+        if(Type.KEY == this.type || Type.STR_VALUE == this.type){
+            return "\"" + JsonEscapeUtils.unescape(this.literal.substring(1, this.literal.length() - 1)) + "\"";
+        }else{
+            return this.literal;
+        }
+    }
+
     public enum Type{
         /**
          * key, 字符串

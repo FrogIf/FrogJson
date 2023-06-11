@@ -5,8 +5,12 @@ import java.util.List;
 public class JsonOperator {
 
     public static JsonElement parse(String json) throws JsonParseException {
+        return parse(json, DeserializerFeature.Escape, DeserializerFeature.AbortWhenIncorrect);
+    }
+
+    public static JsonElement parse(String json, DeserializerFeature... features) throws JsonParseException {
         // 词法分析
-        List<JsonToken> tokens = JsonLexicalAnalyzer.lexicalAnalysis(json, true);
+        List<JsonToken> tokens = JsonLexicalAnalyzer.lexicalAnalysis(json, features);
         if(!tokens.isEmpty()){
             JsonToken last = tokens.get(tokens.size() - 1);
             if(last.isError()){

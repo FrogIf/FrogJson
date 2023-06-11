@@ -117,7 +117,7 @@ public class JsonAssist {
                         style = "string-value";
                         break;
                     case STRUCTURE:
-                        String literal = token.getLiteral();
+                        String literal = token.getOrigin();
                         if("{".equals(literal) || "}".equals(literal)){ style = "brace"; }
                         else if ("[".equals(literal) || "]".equals(literal)){ style = "bracket"; }
                         else { style = "splitter"; }
@@ -133,7 +133,7 @@ public class JsonAssist {
                 preStyles = cursorStyles;
                 cursorStyles = styles;
                 styles.add(style);
-                styleList.add(new StyleBox(token.getLiteral(), styles));
+                styleList.add(new StyleBox(token.getOrigin(), styles));
             }
             if(preStyles != null){
                 JsonToken t = tokens.get(tokens.size() - 1);
@@ -333,7 +333,7 @@ public class JsonAssist {
             if(tokens == null){
                 String text = codeArea.getText();
                 if(StringUtils.isNotBlank(text)){
-                    tokens = JsonLexicalAnalyzer.lexicalAnalysis(text, false);
+                    tokens = JsonLexicalAnalyzer.lexicalAnalysis(text);
                 }
             }
             return tokens;
