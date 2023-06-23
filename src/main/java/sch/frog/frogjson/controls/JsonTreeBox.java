@@ -1,13 +1,14 @@
 package sch.frog.frogjson.controls;
 
 import javafx.collections.ObservableList;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.TreeItem;
-import javafx.scene.control.TreeView;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.shape.Circle;
 import sch.frog.frogjson.ClipboardUtil;
 import sch.frog.frogjson.MessageEmitter;
 import sch.frog.frogjson.TreeNodeInfo;
@@ -25,13 +26,44 @@ public class JsonTreeBox extends BorderPane {
 
     private final TreeSearchForeachActionForPrevious treeSearchForeachActionForPrevious;
 
-    public JsonTreeBox(MessageEmitter messageEmitter) {
+    public JsonTreeBox(MessageEmitter messageEmitter, JsonEditor parent) {
         treeView = new TreeView<>();
         treeSearchForeachActionForNext = new TreeSearchForeachActionForNext(this.treeView, messageEmitter);
         treeSearchForeachActionForPrevious = new TreeSearchForeachActionForPrevious(this.treeView, messageEmitter);
         treeView.setContextMenu(initContextMenu(treeView));
 
-        this.setCenter(treeView);
+        StackPane treeContainer = new StackPane();
+        treeContainer.getChildren().add(treeView);
+
+        Button closeBtn = new Button("×");
+//        closeBtn.prefHeight(12);
+//        closeBtn.maxHeight(12);
+//        closeBtn.prefWidth(12);
+//        closeBtn.maxWidth(12);
+        closeBtn.setStyle("-fx-font-size: 10; -fx-cursor: hand;-fx-background-radius:10;-fx-border-radius:10;-fx-background-color: #9b9b9b;");
+        closeBtn.setOnMouseClicked(mouseEvent -> {
+            parent.closeTree();
+        });
+        StackPane.setMargin(closeBtn, new Insets(5, 30, 0, 0));
+        StackPane.setAlignment(closeBtn, Pos.TOP_RIGHT);
+        treeContainer.getChildren().add(closeBtn);
+
+//        Circle circle = new Circle();
+//        Label close = new Label("×");
+//        close.setPadding(new Insets(0, 10, 0, 10));
+//        close.setStyle("-fx-font-size: 16; -fx-cursor: hand;");
+//        close.setOnMouseClicked(mouseEvent -> {
+//            parent.closeTree();
+//        });
+//        Pane p = new Pane();
+//        p.prefHeight(10);
+//        p.prefWidth(10);
+//        p.setStyle("-fx-background-radius:4;-fx-border-radius:4;-fx-background-color: #9b9b9b;");
+//        p.getChildren().add(close);
+//        StackPane.setAlignment(p, Pos.TOP_RIGHT);
+//        treeContainer.getChildren().add(p);
+
+        this.setCenter(treeContainer);
         treeSearchBox = new SearchBox(this, (text, searchOverviewFetcher) -> {
             messageEmitter.clear();
             searchNextForTree(text, messageEmitter);

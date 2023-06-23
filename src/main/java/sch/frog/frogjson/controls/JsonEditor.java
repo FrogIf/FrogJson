@@ -29,8 +29,8 @@ public class JsonEditor extends SplitPane {
     }
 
     public void openTree(TreeItem<TreeNodeInfo> root) {
-        if (jsonTreeBox == null) {
-            jsonTreeBox = new JsonTreeBox(this.messageEmitter);
+        if(jsonTreeBox == null){
+            jsonTreeBox = new JsonTreeBox(this.messageEmitter, this);
             super.getItems().add(jsonTreeBox);
         }
         jsonTreeBox.setTreeRoot(root);
@@ -43,6 +43,13 @@ public class JsonEditor extends SplitPane {
             }
         }
         root.setExpanded(maxLen < 5000);
+    }
+
+    public void closeTree(){
+        if(jsonTreeBox != null){
+            super.getItems().remove(jsonTreeBox);
+            jsonTreeBox = null;
+        }
     }
 
 }
