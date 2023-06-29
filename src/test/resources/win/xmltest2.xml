@@ -1,0 +1,73 @@
+<xml xmlns:s="uuid:BDC6E3F0-6DA3-11d1-A2A3-00AA00C14882"
+     xmlns:dt="uuid:C2F41010-65B3-11d1-A29F-00AA00C14882"
+     xmlns:rs="urn:schemas-microsoft-com:rowset"
+     xmlns:z="#RowsetSchema">
+    <s:Schema id="RowsetSchema">
+        <s:ElementType xmlns:vv="urn:schemas-microsoft-com:rowset" name="row" content="eltOnly" rs:updatable="true">
+            <vv:aaa vv:age="123">sdf</vv:aaa>
+            <s:AttributeType name="Cls" rs:number="0">
+                <s:datatype dt:type="string"/>
+            </s:AttributeType>
+            <s:AttributeType name="Sev" rs:number="1">
+                <s:datatype dt:type="int"/>
+            </s:AttributeType>
+            <s:AttributeType name="Maj" rs:number="2">
+                <s:datatype dt:type="string"/>
+            </s:AttributeType>
+            <s:AttributeType name="Min" rs:number="3">
+                <s:datatype dt:type="string"/>
+            </s:AttributeType>
+            <s:AttributeType name="LN" rs:number="4">
+                <s:datatype dt:type="int"/>
+            </s:AttributeType>
+            <s:AttributeType name="Fil" rs:number="5">
+                <s:datatype dt:type="string"/>
+            </s:AttributeType>
+            <s:AttributeType name="Fun" rs:number="6">
+                <s:datatype dt:type="string"/>
+            </s:AttributeType>
+            <s:AttributeType name="Uid" rs:number="7">
+                <s:datatype dt:type="int"/>
+            </s:AttributeType>
+            <s:AttributeType name="Msg" rs:number="8">
+                <s:datatype dt:type="string"/>
+            </s:AttributeType>
+            <s:AttributeType name="PID" rs:number="9">
+                <s:datatype dt:type="int"/>
+            </s:AttributeType>
+            <s:AttributeType name="TID" rs:number="10">
+                <s:datatype dt:type="int"/>
+            </s:AttributeType>
+            <s:AttributeType name="Con" rs:number="11">
+                <s:datatype dt:type="string"/>
+            </s:AttributeType>
+            <s:AttributeType name="Exe" rs:number="12">
+                <s:datatype dt:type="string"/>
+            </s:AttributeType>
+            <s:AttributeType name="Mod" rs:number="13">
+                <s:datatype dt:type="string"/>
+            </s:AttributeType>
+            <s:AttributeType name="Err" rs:number="14">
+                <s:datatype dt:type="int"/>
+            </s:AttributeType>
+            <s:AttributeType name="MD" rs:number="15">
+                <s:datatype dt:type="hexBinary"/>
+            </s:AttributeType>
+            <s:AttributeType name="DT" rs:number="16">
+                <s:datatype dt:type="dateTime"/>
+            </s:AttributeType>
+        </s:ElementType>
+    </s:Schema>
+    <rs:data>
+        <z:row Cls="D" Sev="50331648" Maj="Def" Min="Def" LN="565" Fil="" Fun="SPGetFootprintCapabilities" Uid="50331648" Msg="SPGetFootprintCapabilities: Footprint [Footprint.Basic] incomplete; the platform capability will not be available" PID="10252" TID="6672" Con="" Exe="C:\$Windows.~WS\Sources\SetupHost.Exe" Mod="SetupPlatform.dll" Err="2" MD="" DT="2023-06-22T16:41:18"/>
+        <z:row Cls="D" Sev="50331648" Maj="Def" Min="Def" LN="565" Fil="" Fun="SPGetFootprintCapabilities" Uid="50331648" Msg="SPGetFootprintCapabilities: Footprint [Footprint.Servicing] incomplete; the platform capability will not be available" PID="10252" TID="6672" Con="" Exe="C:\$Windows.~WS\Sources\SetupHost.Exe" Mod="SetupPlatform.dll" Err="2" MD="" DT="2023-06-22T16:41:18"/>
+        <z:row Cls="D" Sev="50331648" Maj="Def" Min="Def" LN="565" Fil="" Fun="SPGetFootprintCapabilities" Uid="50331648" Msg="SPGetFootprintCapabilities: Footprint [Footprint.ICB] incomplete; the platform capability will not be available" PID="10252" TID="6672" Con="" Exe="C:\$Windows.~WS\Sources\SetupHost.Exe" Mod="SetupPlatform.dll" Err="2" MD="" DT="2023-06-22T16:41:18"/>
+        <z:row Cls="D" Sev="50331648" Maj="Def" Min="Def" LN="565" Fil="" Fun="SPGetFootprintCapabilities" Uid="50331648" Msg="SPGetFootprintCapabilities: Footprint [Footprint.Migration] incomplete; the platform capability will not be available" PID="10252" TID="6672" Con="" Exe="C:\$Windows.~WS\Sources\SetupHost.Exe" Mod="SetupPlatform.dll" Err="2" MD="" DT="2023-06-22T16:41:18"/>
+        <z:row Cls="D" Sev="50331648" Maj="Def" Min="Def" LN="274" Fil="" Fun="CSetupOneSetting::InitializeAndQuery" Uid="50331648" Msg="Onesettings: Failed to get DeviceId from registry: 0x80070002" PID="10252" TID="6672" Con="" Exe="C:\$Windows.~WS\Sources\SetupHost.Exe" Mod="SetupPlatform.dll" Err="2" MD="" DT="2023-06-22T16:41:18"/>
+        <z:row Cls="D" Sev="50331648" Maj="Def" Min="Def" LN="119" Fil="" Fun="CreateSetupOneSettings" Uid="50331648" Msg="Onesettings: Failed to initialize and query: 0x80070002" PID="10252" TID="6672" Con="" Exe="C:\$Windows.~WS\Sources\SetupHost.Exe" Mod="SetupPlatform.dll" Err="2" MD="" DT="2023-06-22T16:41:18"/>
+        <z:row Cls="D" Sev="50331648" Maj="Def" Min="Def" LN="398" Fil="" Fun="CSetupPlatformTracing::ReadTracingOneSettings" Uid="50331648" Msg="Failed to create OneSettings infrastructure. Error: 0x0880070002" PID="10252" TID="6672" Con="" Exe="C:\$Windows.~WS\Sources\SetupHost.Exe" Mod="SetupPlatform.dll" Err="2" MD="" DT="2023-06-22T16:41:18"/>
+        <z:row Cls="D" Sev="50331648" Maj="Def" Min="Def" LN="520" Fil="" Fun="CSetupPlatformTracing::Initialize" Uid="50331648" Msg="No onesetting configured or error getting onesetting" PID="10252" TID="6672" Con="" Exe="C:\$Windows.~WS\Sources\SetupHost.Exe" Mod="SetupPlatform.dll" Err="2" MD="" DT="2023-06-22T16:41:18"/>
+        <z:row Cls="D" Sev="50331648" Maj="Def" Min="Def" LN="13030" Fil="" Fun="CSetupPlatform::Initialize" Uid="51150848" Msg="CSetupPlatform::Initialize: Failed to initialize tracing" PID="10252" TID="6672" Con="" Exe="C:\$Windows.~WS\Sources\SetupHost.Exe" Mod="SetupPlatform.dll" Err="203" MD="" DT="2023-06-22T16:41:18"/>
+        <z:row Cls="D" Sev="50331648" Maj="Def" Min="Def" LN="14614" Fil="" Fun="CSetupPlatform::ResurrectNewSystem" Uid="51150848" Msg="CSetupPlatform::ResurrectNewSystem: Cannot find new system serialized data." PID="10252" TID="6672" Con="" Exe="C:\$Windows.~WS\Sources\SetupHost.Exe" Mod="SetupPlatform.dll" Err="2" MD="" DT="2023-06-22T16:41:18"/>
+    </rs:data>
+</xml>

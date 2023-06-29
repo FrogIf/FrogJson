@@ -52,7 +52,7 @@ public class JsonEscapeUtils {
             char ch = origin.charAt(i);
             if(ch == '\\'  && i + 1 < len){
                 char c = origin.charAt(i + 1);
-                if(i + 1 < escapeChars.length && escapeChars[c] != 0){
+                if(c < escapeChars.length && escapeChars[c] != 0){
                     sb.append(escapeChars[c]);
                     i++;
                     continue;

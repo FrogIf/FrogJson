@@ -11,9 +11,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import sch.frog.frogjson.controls.JsonEditor;
-import sch.frog.frogjson.json.JsonElement;
-import sch.frog.frogjson.json.JsonOperator;
-import sch.frog.frogjson.json.JsonParseException;
+import sch.frog.frogjson.json.*;
 import sch.frog.frogjson.util.StringUtils;
 
 import java.io.BufferedReader;
@@ -36,26 +34,35 @@ public class MainController implements Initializable {
 
     private MessageEmitter messageEmitter;
 
+    private final SerializerConfiguration SERIALIZER_CONFIGURATION = new SerializerConfiguration();
+    private final DeserializerConfiguration DESERIALIZER_CONFIGURATION = new DeserializerConfiguration();
+
+    public MainController() {
+        SERIALIZER_CONFIGURATION.setEscape(false);
+        DESERIALIZER_CONFIGURATION.setEscape(false);
+        DESERIALIZER_CONFIGURATION.setAbortWhenIncorrect(true);
+    }
+
     @FXML
     protected void onCompactBtnClick() {
         this.editJson(origin -> {
-            JsonElement jsonElement = JsonOperator.parse(origin);
-            return jsonElement.toCompressString();
+            JsonElement jsonElement = JsonOperator.parse(origin, DESERIALIZER_CONFIGURATION);
+            return jsonElement.toCompressString(SERIALIZER_CONFIGURATION);
         });
     }
 
     @FXML
     protected void onPrettyBtnClick() {
         this.editJson(origin -> {
-            JsonElement jsonElement = JsonOperator.parse(origin);
-            return jsonElement.toPrettyString();
+            JsonElement jsonElement = JsonOperator.parse(origin, DESERIALIZER_CONFIGURATION);
+            return jsonElement.toPrettyString(SERIALIZER_CONFIGURATION);
         });
     }
 
     @FXML
     protected void onToStringBtnClick() {
         this.editJson(origin -> {
-            JsonElement jsonElement = JsonOperator.parse(origin);
+            JsonElement jsonElement = JsonOperator.parse(origin, DESERIALIZER_CONFIGURATION);
             return JsonStringUtil.toString(jsonElement);
         });
     }
@@ -64,7 +71,7 @@ public class MainController implements Initializable {
     protected void onFromStringBtnClick() {
         this.editJson(origin -> {
             JsonElement element = JsonStringUtil.fromString(origin);
-            return element.toPrettyString();
+            return element.toPrettyString(SERIALIZER_CONFIGURATION);
         });
     }
 
@@ -90,6 +97,7 @@ public class MainController implements Initializable {
         messageEmitter = new MessageEmitter(msgText);
         EditTabManager.addTab(mainTabPane, messageEmitter);
         mainTabPane.setContextMenu(initTabPaneContextMenu(mainTabPane));
+        mainTabPane.setTabDragPolicy(TabPane.TabDragPolicy.REORDER);
     }
 
     private interface IEditStrategy {
@@ -113,7 +121,7 @@ public class MainController implements Initializable {
             }
             TreeStructJsonWriter writer = new TreeStructJsonWriter();
             try {
-                JsonElement jsonElement = JsonOperator.parse(json);
+                JsonElement jsonElement = JsonOperator.parse(json, DESERIALIZER_CONFIGURATION);
                 jsonElement.customWrite(writer);
                 TreeItem<TreeNodeInfo> root = writer.getRoot();
                 editor.openTree(root);

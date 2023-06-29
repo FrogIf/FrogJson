@@ -1,5 +1,5 @@
 <res>
-    <header key="sss" val="sdf">
+    <header key="sss" val="sdf" a="123">
         <msgId>0000211</msgId>
         <hdlSts>A</hdlSts>
         <bdFlg>0</bdFlg>

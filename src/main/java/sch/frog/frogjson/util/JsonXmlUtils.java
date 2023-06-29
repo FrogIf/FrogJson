@@ -67,7 +67,13 @@ public class JsonXmlUtils {
                 json2Dom4j((JsonObject) o, e);
             }else{
                 String val = o == null ? "" : o.toString();
-                if(key.startsWith("@")){
+                if(key.startsWith("@@")){
+                    if(key.equals("@@text")){
+                        element.setText(val);
+                    }else if(key.startsWith("@@xmlns")){
+                        element.addNamespace(key.substring("@@xmlns:".length()), val);
+                    }
+                } else if(key.startsWith("@")){
                     element.addAttribute(key.substring(1), val);
                 }else{
                     Element e = element.addElement(key);
@@ -92,62 +98,59 @@ public class JsonXmlUtils {
         if(StringUtils.isBlank(xml)){
             throw new IllegalArgumentException("xml is blank");
         }
-        Document doc = null;
+        Document doc;
         try {
             doc = DocumentHelper.parseText(xml);
         } catch (DocumentException e) {
             throw new RuntimeException(e);
         }
         Element rootElement = doc.getRootElement();
-        JsonObject jsonObject = new JsonObject();
-        dom4j2Json(rootElement, jsonObject);
-        if(!rootElement.elements().isEmpty()){
-            JsonObject obj = new JsonObject();
-            obj.put(rootElement.getName(), jsonObject);
-            jsonObject = obj;
+        JsonObject jsonObject = dom4j2Json(rootElement);
+        JsonObject result = new JsonObject();
+        if(jsonObject.keys().size() == 1 && jsonObject.containsKey("@@text")){
+            result.put(rootElement.getQualifiedName(), jsonObject.get("@@text"));
+        }else{
+            result.put(rootElement.getQualifiedName(), jsonObject);
         }
-        return jsonObject.toPrettyString();
+        return result.toPrettyString();
     }
 
-    private static void dom4j2Json(Element element, JsonObject json){
-        for (Attribute attr : element.attributes()) {
-            if(StringUtils.isNotBlank(attr.getValue())){
-                json.put("@" + attr.getName(), attr.getValue());
+    private static JsonObject dom4j2Json(Element element){
+        JsonObject obj = new JsonObject();
+        List<Namespace> namespaces = element.declaredNamespaces();
+        if(namespaces != null && !namespaces.isEmpty()){
+            for (Namespace namespace : namespaces) {
+                obj.put("@@xmlns:" + namespace.getPrefix(), namespace.getStringValue());
             }
         }
+        for (Attribute attr : element.attributes()) {
+            obj.put("@" + attr.getQualifiedName(), attr.getValue());
+        }
         List<Element> elements = element.elements();
-        if(elements.isEmpty()){
-            json.put(element.getName(), element.getText());
+        if(elements.isEmpty() && StringUtils.isNotBlank(element.getText())){
+            obj.put("@@text", element.getText());
         }else{
             for (Element ele : elements) {
-                List<Element> cList = ele.elements();
-                String name = ele.getName();
-                if(cList.isEmpty()){    // 说明这个ele是一个属性
-                    for (Attribute attr : ele.attributes()) {
-                        if(StringUtils.isNotBlank(attr.getValue())){
-                            json.put("@" + attr.getName(), attr.getValue());
-                        }
-                    }
-                    json.put(name, ele.getText());
-                }else{
-                    JsonObject o = new JsonObject();
-                    dom4j2Json(ele, o);
-                    Object v = json.get(name);
-                    if(v == null){
-                        json.put(name, o);
+                String name = ele.getQualifiedName();
+                JsonObject subObj = dom4j2Json(ele);
+                Object o = obj.get(name);
+                if(o == null){
+                    if(subObj.keys().size() == 1 && subObj.containsKey("@@text")){
+                        obj.put(name, subObj.get("@@text"));
                     }else{
-                        if(v instanceof JsonArray){
-                            ((JsonArray) v).add(o);
-                        }else if(v instanceof JsonObject){
-                            JsonArray a = new JsonArray();
-                            a.add(o);
-                            a.add(v);
-                            json.put(name, a);
-                        }
+                        obj.put(name, subObj);
                     }
+                }else if(o instanceof JsonArray){
+                    ((JsonArray) o).add(subObj);
+                }else{
+                    JsonArray a = new JsonArray();
+                    a.add(o);
+                    a.add(subObj);
+                    obj.put(name, a);
                 }
             }
         }
+        return obj;
     }
 
 }

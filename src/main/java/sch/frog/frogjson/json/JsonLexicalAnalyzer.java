@@ -214,15 +214,21 @@ public class JsonLexicalAnalyzer {
         if (ch != '"') { return result.toString(); }
         i++;
         result.append('"');
+        int escape = 0;
         while (i < len) {
             ch = str.charAt(i);
-            if (ch == '"') {
+            if (ch == '"' && (escape & 1) == 0) {
                 check.value = true;
                 result.append('"');
                 break;
-            } else{
+            }else{
                 result.append(ch);
                 i++;
+            }
+            if(ch == '\\'){
+                escape++;
+            }else{
+                escape = 0;
             }
         }
         return result.toString();

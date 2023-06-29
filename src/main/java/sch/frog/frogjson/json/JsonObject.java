@@ -134,4 +134,8 @@ public class JsonObject implements JsonElement {
         }
         return keyList;
     }
+
+    public boolean containsKey(String key){
+        return this.kvMap.containsKey(key);
+    }
 }
