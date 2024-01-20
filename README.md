@@ -45,3 +45,8 @@ java -jar launch4j.jar
 Bundled JRE paths - 配置jre路径, 这里建议配置%JAVA_HOME%, 否则OpenJDK环境下无法启动.
 
 4. 点击上方菜单栏的"齿轮", 保存配置文件到任意地方. launch4j会自动开始打包, 然后就可以用了.
+
+## 计划
+
+* 替换
+* 保存

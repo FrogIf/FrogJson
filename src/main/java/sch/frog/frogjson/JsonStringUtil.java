@@ -1,13 +1,25 @@
 package sch.frog.frogjson;
 
+import sch.frog.frogjson.json.DeserializerConfiguration;
 import sch.frog.frogjson.json.JsonElement;
 import sch.frog.frogjson.json.JsonOperator;
 import sch.frog.frogjson.json.JsonParseException;
+import sch.frog.frogjson.json.SerializerConfiguration;
 
 class JsonStringUtil {
 
+    private static final DeserializerConfiguration DEFAULT_DESERIALIZER_CONFIGURATION = new DeserializerConfiguration();
+    private static final SerializerConfiguration DEFAULT_SERIALIZER_CONFIGURATION = new SerializerConfiguration();
+
+    static {
+        DEFAULT_DESERIALIZER_CONFIGURATION.setEscape(false);
+        DEFAULT_DESERIALIZER_CONFIGURATION.setAbortWhenIncorrect(false);
+
+        DEFAULT_SERIALIZER_CONFIGURATION.setEscape(false);
+    }
+
     public static String toString(JsonElement jsonElement){
-        String compressString = jsonElement.toCompressString();
+        String compressString = jsonElement.toCompressString(DEFAULT_SERIALIZER_CONFIGURATION);
         int len = compressString.length();
         StringBuilder sb = new StringBuilder(len);
         sb.append('\"');
@@ -65,7 +77,7 @@ class JsonStringUtil {
                 i++;
             }
         }
-        return JsonOperator.parse(json.toString());
+        return JsonOperator.parse(json.toString(), DEFAULT_DESERIALIZER_CONFIGURATION);
     }
 
     private static boolean match(String str, String match, int start) {
